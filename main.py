@@ -1,5 +1,5 @@
 from client.interface import Interface
-from client.interface.wm_screens import login
+from client.interface.wm_screens.login import *
 from client.settings import *
 
 import tkinter as tk
@@ -18,8 +18,8 @@ app_settings = {
     "title" : TITLE,
     "geometry" : "%dx%d" % (INITIAL_WIDTH, INITIAL_HEIGHT),
     "wm_resizable" : {
-        "width": False,
-        "height": False
+        "width": True,
+        "height": True
     }
 }
 
@@ -35,12 +35,11 @@ class App(object):
         """
         
         if args is None: args = {}
-        self.master = Interface(interface=tk.Tk(), **args)
-        self.settings = self.master._settings
-        self.login_interface = login.LoginInterface(self.master)
         
-        
-        
+        # Top-most level master frame
+        self.interface = Interface(**args)
+        self.settings = self.interface._settings
+
 if __name__ == '__main__':
     app = App(
         args=app_settings
@@ -49,5 +48,10 @@ if __name__ == '__main__':
     # Add any new settings after initialisation like below:
     # app.settings['SETTING_NAME'] = SETTING_VALUE
     
+    login = Login(app.interface)
+    
+    
+    
+    
     # Run the tkinter program.
-    app.master.mainloop()
+    app.interface.mainloop()
