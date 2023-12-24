@@ -1,6 +1,8 @@
 from client.interface import Interface
 from client.interface.wm_screens.login import *
 from client.settings import *
+from tkinter import messagebox
+from authors import authors
 
 import tkinter as tk
 import asyncio
@@ -39,6 +41,13 @@ class App(object):
         # Top-most level master frame
         self.interface = Interface(**args)
         self.settings = self.interface._settings
+        
+    def show_creators(self):
+        message = ""
+        for k, v in authors.items():
+            message += f"{k} : {v}\n"
+            
+        return messagebox.showinfo("Project Authors", f"Made by UWE Bristol Students: \n{message}")
 
 if __name__ == '__main__':
     app = App(
@@ -47,6 +56,26 @@ if __name__ == '__main__':
     
     # Add any new settings after initialisation like below:
     # app.settings['SETTING_NAME'] = SETTING_VALUE
+    
+    # Add a menu to the top level application window
+    menu = tk.Menu(app.interface.master)
+    app.interface.master.config(menu=menu)
+    app.interface.master.option_add('*tearOff', False)
+    app.interface.master.eval('tk::PlaceWindow . center')
+    file_menu = tk.Menu(menu)
+    edit_menu = tk.Menu(menu)
+    
+    # File Drop down menu
+    menu.add_cascade(label="File", menu=file_menu)
+    file_menu.add_command(label='Save')
+    file_menu.add_command(label='Save As')
+    
+    # Edit Menu
+    menu.add_cascade(label="Edit", menu=edit_menu)
+    edit_menu.add_command(label="Order")
+    
+    # About Us
+    menu.add_command(label="About us", command=app.show_creators)
     
     login = Login(app.interface)
     

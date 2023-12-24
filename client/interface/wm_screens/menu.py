@@ -5,3 +5,7 @@
 #   specifically be programmed in this environment.
 # 
 # --------------------------------------------------------------------------------------- #
+
+
+class Menu(object):
+    pass
