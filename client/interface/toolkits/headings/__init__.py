@@ -55,3 +55,11 @@ class Heading1(BaseFont):
         self.font_style["size"] = int(self.font_style["size"] * 2.5) # rem
         self.tkfont = Font(root=interface, **self.font_style)
         self.label = Label(master=interface, text=text, font=self.tkfont)
+        
+        
+class TextLabel(Characters):
+     def __init__(self, interface, family="Arial", text="LABEL_TEXT", propagate=False):
+        super().__init__(family, propagate)
+        self.tkfont = Font(root=interface, **self.font_style)
+        self.label = Label(interface, text=text, font=self.tkfont)
+        
