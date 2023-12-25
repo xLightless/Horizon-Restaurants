@@ -24,6 +24,7 @@ widget_options = {
 }
 
 NAVBAR_HEIGHT = 64
+STAFF_ID_LENGTH = 6
 
 
 class Login(AuthenticateUser):
@@ -33,6 +34,8 @@ class Login(AuthenticateUser):
         # Initialise a Login Interface Frame
         i = tk.Frame(interface.master, width=INITIAL_WIDTH, height=INITIAL_HEIGHT)
         i.pack(fill="both", expand=True)
+        
+        self.i = i
         
         # Create a subframe for the UI
         i_top = tk.Frame(i, width=INITIAL_WIDTH, height=NAVBAR_HEIGHT)
@@ -93,7 +96,11 @@ class Login(AuthenticateUser):
             if idx == 11:
                 btn.configure(command = lambda: self.on_tbx_delete(tbx_input_disabled.input_box))
             if idx == 9:
-                btn.configure(command = lambda: print("Getting database details, logging in...") if self.get_tbx_length(tbx_input_disabled.input_box)>0 else messagebox.showwarning("Authentication Error!", InvalidCredentialsError()))
+                btn.configure(
+                    command = lambda x=tbx_input_disabled.input_box: print(self.login(x)) 
+                    if self.get_tbx_length(x)>=STAFF_ID_LENGTH 
+                    else messagebox.showwarning("Authentication Error!", InvalidCredentialsError())
+                )
             
         # tbx_input_disabled.input_box.configure(textvariable=disabled_btn_text.set(disabled_btn_text + btn_text))
 
@@ -103,12 +110,23 @@ class Login(AuthenticateUser):
         lbl_frame_top.pack(side=tk.TOP)
         lbl_frame_bottom.pack(side=tk.BOTTOM)
         lbl_frame.pack()
-        lbl_frame.pack()
-    
+        lbl_frame.pack()    
 
-    def login(self):
+    def login(self, staff_id):
         """Attempts to login the user with the requested access method."""
-        return
+        
+        # Check the parameter type
+        if isinstance(staff_id, Entry):
+            self.staff_id = staff_id.get()
+        else:
+            self.staff_id = staff_id
+            
+        # Get the database information about the user
+        # db_staff_id = Database().get_record_row(table, staff_id)
+        # self.staff_name = db_staff_id['name']
+        
+        self.i.forget()
+        return "Getting database details, logging in..."
 
 
     def on_tbx_insert(self, tbx_input, args):

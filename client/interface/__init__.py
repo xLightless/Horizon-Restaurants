@@ -90,6 +90,9 @@ class Interface(object):
     def hide_interface(self, **elements):
         """ Top-level manager for hiding interface elements. Useful for managing UI elements."""
         
+        for k,v in elements.items():
+            elements[k].forget()
+        
         return f"Disabling {self.master}: {elements}."
     
             

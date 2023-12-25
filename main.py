@@ -3,6 +3,7 @@ from client.interface.wm_screens.login import *
 from client.settings import *
 from tkinter import messagebox
 from authors import authors
+from typing import Optional
 
 import tkinter as tk
 import asyncio
@@ -42,6 +43,47 @@ class App(object):
         self.interface = Interface(**args)
         self.settings = self.interface._settings
         
+        # Create the first level screen
+        self.create_app_menu()
+        login = Login(interface=self.interface)
+        
+
+    def create_app_menu(self, dict_to_menus:dict = None):
+        """Create a tkinter menu."""
+        
+        if dict_to_menus == None:
+            dict_to_menus = {
+                "File": {
+                    "Save": None
+                },
+                "Edit": {
+                    "Order": None
+                },
+                "About": self.show_creators
+            }
+        
+        # Add a menu to the top level application window
+        menu = tk.Menu(self.interface.master)
+        self.interface.master.config(menu=menu)
+        self.interface.master.option_add('*tearOff', False)
+        menu_list = {}
+        
+        # Pass a dictionary into a sorted menu set
+        for key in dict_to_menus.keys():
+            # print(temp_menu.__dict__)
+            if type(dict_to_menus[key]) == dict:
+                for command_name, command in dict_to_menus[key].items():
+                    menu_list[key] = tk.Menu(menu)
+                    menu.add_cascade(label=key, menu=menu_list[key])
+                    menu_list[key].add_command(label=command_name, command=command)
+                    
+            else:
+                menu.add_command(label=key, command=dict_to_menus[key])
+        return menu_list
+        
+        
+        
+        
     def show_creators(self):
         message = ""
         for k, v in authors.items():
@@ -56,29 +98,6 @@ if __name__ == '__main__':
     
     # Add any new settings after initialisation like below:
     # app.settings['SETTING_NAME'] = SETTING_VALUE
-    
-    # Add a menu to the top level application window
-    menu = tk.Menu(app.interface.master)
-    app.interface.master.config(menu=menu)
-    app.interface.master.option_add('*tearOff', False)
-    app.interface.master.eval('tk::PlaceWindow . center')
-    file_menu = tk.Menu(menu)
-    edit_menu = tk.Menu(menu)
-    
-    # File Drop down menu
-    menu.add_cascade(label="File", menu=file_menu)
-    file_menu.add_command(label='Save')
-    file_menu.add_command(label='Save As')
-    
-    # Edit Menu
-    menu.add_cascade(label="Edit", menu=edit_menu)
-    edit_menu.add_command(label="Order")
-    
-    # About Us
-    menu.add_command(label="About us", command=app.show_creators)
-    
-    login = Login(app.interface)
-    
     
     
     
