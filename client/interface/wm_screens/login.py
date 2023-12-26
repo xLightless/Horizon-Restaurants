@@ -143,7 +143,7 @@ class Login(Staff):
         lbl_frame.pack()
         lbl_frame.pack()    
 
-    def login(self, staff_id):
+    def login(self, staff_id, password:int = None):
         """Attempts to login the user with the requested access method."""
         
         # Check the parameter type
@@ -160,6 +160,12 @@ class Login(Staff):
         self.i.forget()
         if self.login_status == True: print("Getting database details, logging in...")
         return self.login_status
+    
+    def require_login_details(self):
+        return
+    
+    def verify_details(self) -> bool:
+        return
 
 
     def on_tbx_insert(self, tbx_input, args):
@@ -177,11 +183,28 @@ class Login(Staff):
     
 class Chef(Staff):
     def __init__(self):
-        self._chef_id: str
-        self._chef_name: str
+        self._chef_id = self.staff_id
+        self._chef_name = self.staff_name
     
 class Manager(Chef):
-    pass
+    def __init__(self):
+        self.manager_id = self.staff_id
+        self.manager_name = self.staff_name
+        
+class Admin(Manager):
+    def __init__(self):
+        self.admin_id = self.staff_id
+        self.admin_name = self.staff_name
+        
+    def create_user(self, staff_type:str, account_password:str, account_email:str, staff_account_id:int):
+        return
+    
+    def update_user(self, staff_account_number:int, **args):
+        return
+    
+    def view_users(self):
+        return
+        
 
 
 
