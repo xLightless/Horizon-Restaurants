@@ -10,12 +10,15 @@ from client.interface import Interface
 from client.interface.authentication import AuthenticateUser
 from client.interface.toolkits.typography.font import *
 from client.interface.toolkits import inputs, headings
+from client.interface.wm_screens.inventory import Inventory
 from client.settings import INITIAL_HEIGHT, INITIAL_WIDTH
 from client.errors import InvalidCredentialsError
 
 from tkinter import messagebox
 import tkinter as tk
 
+
+# Login Interface options
 widget_options = {
     "bd" : 1,
     "relief" : tk.SOLID,
@@ -24,13 +27,41 @@ widget_options = {
 }
 
 NAVBAR_HEIGHT = 64
-STAFF_ID_LENGTH = 6
 
+# Login parameter constants
+STAFF_ID__MIN_LENGTH = 6
 
-class Login(AuthenticateUser):
+class Staff(object):
+    def __init__(self):
+        self.staff_id:str = f"{0}"
+        self.staff_name:str = ""
+        
+        print(len(self.staff_id))
+        
+    def accept_order(self):
+        return
+    
+    def __get_customer(self, customer_id:int):
+        """Potentially a redundant function due to the impracticalness of customer in UML. """
+        return
+    
+    def _logout(self):
+        """ Logs out the Staff member if already logged in."""
+        return True if len(self.staff_id)==6 else False
+    
+    def get_checked_inventory(self, inventory: Inventory) -> dict:
+        return
+    
+    def request_login_information(self) -> tuple:
+        return (self.staff_id, self.staff_name)
+
+class Login(Staff):
     """ Login Interface component for the HRMS System. """
     
     def __init__(self, interface:Interface):
+        super().__init__()
+        self.login_status = False
+        
         # Initialise a Login Interface Frame
         i = tk.Frame(interface.master, width=INITIAL_WIDTH, height=INITIAL_HEIGHT)
         i.pack(fill="both", expand=True)
@@ -98,7 +129,7 @@ class Login(AuthenticateUser):
             if idx == 9:
                 btn.configure(
                     command = lambda x=tbx_input_disabled.input_box: print(self.login(x)) 
-                    if self.get_tbx_length(x)>=STAFF_ID_LENGTH 
+                    if self.get_tbx_length(x)>=STAFF_ID__MIN_LENGTH 
                     else messagebox.showwarning("Authentication Error!", InvalidCredentialsError())
                 )
             
@@ -124,9 +155,11 @@ class Login(AuthenticateUser):
         # Get the database information about the user
         # db_staff_id = Database().get_record_row(table, staff_id)
         # self.staff_name = db_staff_id['name']
+        self.login_status = True
         
         self.i.forget()
-        return "Getting database details, logging in..."
+        if self.login_status == True: print("Getting database details, logging in...")
+        return self.login_status
 
 
     def on_tbx_insert(self, tbx_input, args):
@@ -141,9 +174,14 @@ class Login(AuthenticateUser):
         
     def get_tbx_length(self, tbx_input):
         return len(tbx_input.get())
-        
-
-
+    
+class Chef(Staff):
+    def __init__(self):
+        self._chef_id: str
+        self._chef_name: str
+    
+class Manager(Chef):
+    pass
 
 
 

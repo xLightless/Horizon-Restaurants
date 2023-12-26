@@ -44,8 +44,8 @@ class App(object):
         self.settings = self.interface._settings
         
         # Create the first level screen
-        self.create_app_menu()
         login = Login(interface=self.interface)
+        self.create_app_menu()
         
 
     def create_app_menu(self, dict_to_menus:dict = None):
@@ -56,8 +56,10 @@ class App(object):
                 "File": {
                     "Save": None
                 },
-                "Edit": {
-                    "Order": None
+                "View": {
+                    "Order": None,
+                    "Tables": None,
+                    "Reservations": None,
                 },
                 "About": self.show_creators
             }
@@ -72,9 +74,11 @@ class App(object):
         for key in dict_to_menus.keys():
             # print(temp_menu.__dict__)
             if type(dict_to_menus[key]) == dict:
+                menu_list[key] = tk.Menu(menu)
+                menu.add_cascade(label=key, menu=menu_list[key])
                 for command_name, command in dict_to_menus[key].items():
-                    menu_list[key] = tk.Menu(menu)
-                    menu.add_cascade(label=key, menu=menu_list[key])
+                    # menu_list[key] = tk.Menu(menu)
+                    # menu.add_cascade(label=key, menu=menu_list[key])
                     menu_list[key].add_command(label=command_name, command=command)
                     
             else:
