@@ -26,6 +26,9 @@ class InputBox(Characters):
             self.input_box_label.pack(side=LEFT)
         self.input_box.pack(side=RIGHT)
         
+    def get_frame(self):
+        return self.__subinterface
+        
     def display(self, relx=0, rely=0, grid:list=[], sticky=None):
         """Display the input box on the interface via place(). If no args are given then reverts to using (x,y).
 

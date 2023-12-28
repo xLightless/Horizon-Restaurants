@@ -41,28 +41,35 @@ class Main(object):
         self.frame_banner_1.grid_columnconfigure(2, weight=1)
 
         # Some spacing/other options
-        self.frame_content_1 = ttk.Frame(parent, style="frame_content_1.TFrame")
+        self.frame_content_1 = ttk.Frame(parent, style="frame_content_1.TFrame", width=100 // MAIN_GRID_BOXES)
         self.frame_content_1.grid(row=1, column=0, sticky=tk.NSEW, padx=3, pady=3)
-
+        self.frame_content_1.grid_rowconfigure(0, weight=1)
+        self.frame_content_1.grid_columnconfigure(0, weight=1)
+        
         # Number pad
-        self.frame_content_2 = ttk.Frame(parent, style="frame_content_2.TFrame")
+        self.frame_content_2 = ttk.Frame(parent, style="frame_content_2.TFrame", width=100 // MAIN_GRID_BOXES)
         self.frame_content_2.grid(row=1, column=1, sticky=tk.NSEW, padx=3, pady=3)
-
-        # Add grid weighting to the login frame
         self.frame_content_2.grid_rowconfigure(0, weight=1)
-        self.frame_content_2.grid_rowconfigure(2, weight=1)
         self.frame_content_2.grid_columnconfigure(0, weight=1)
-        self.frame_content_2.grid_columnconfigure(2, weight=1)
 
         # Some spacing/other options
-        self.frame_content_3 = ttk.Frame(parent, style="frame_content_3.TFrame")
+        self.frame_content_3 = ttk.Frame(parent, style="frame_content_3.TFrame", width=100 // MAIN_GRID_BOXES)
         self.frame_content_3.grid(row=1, column=2, sticky=tk.NSEW, padx=3, pady=3)
-
         self.frame_content_3.grid_rowconfigure(0, weight=1)
-        self.frame_content_3.grid_rowconfigure(2, weight=1)
         self.frame_content_3.grid_columnconfigure(0, weight=1)
-        self.frame_content_3.grid_columnconfigure(2, weight=1)
-
+        
+        self.containers = [self.frame_content_1, self.frame_content_2, self.frame_content_3]
+        
+        # for i in range(1, MAIN_GRID_BOXES+1):
+        #     frame = ttk.Frame(parent, style=f"frame_content_{i}.TFrame", width=100 // MAIN_GRID_BOXES)
+        #     frame.grid(row=1, column=i, sticky=tk.NSEW, padx=3, pady=3)
+        #     frame.grid_rowconfigure(0, weight=1)
+        #     frame.grid_columnconfigure(0, weight=1)
+            
+        #     # Add each container to a dictionary to modify efficiently.
+        #     self.containers[f"frame_content_{i}.TFrame"] = frame
+            
+            
         # Frame banner content
         self.lbl_title = headings.Heading6(self.frame_banner_1, text="Horizon Restaurants")
         self.lbl_title.label.grid(row=0, column=0, sticky=tk.W)
@@ -85,9 +92,9 @@ class Main(object):
         self.style.configure("bannerFrame.TFrame", background=BACKGROUND_COLOR)
         self.lbl_title.label.configure(background=BACKGROUND_COLOR, fg='#FFFFFF')
         self.lbl_branch_id.label.configure(background=BACKGROUND_COLOR, fg='#FFFFFF')
-        self.style.configure("frame_content_1.TFrame", background=BACKGROUND_COLOR, bd=3, relief=tk.SOLID)
-        self.style.configure("frame_content_2.TFrame", background=BACKGROUND_COLOR, bd=3, relief=tk.SOLID)
-        self.style.configure("frame_content_3.TFrame", background=BACKGROUND_COLOR, bd=3, relief=tk.SOLID)
+        self.style.configure("frame_content_1.TFrame", background=BACKGROUND_COLOR)
+        self.style.configure("frame_content_2.TFrame", background=BACKGROUND_COLOR)
+        self.style.configure("frame_content_3.TFrame", background=BACKGROUND_COLOR)
         
         
     def display_navbar(self, staff_role):
@@ -109,7 +116,8 @@ class Main(object):
         if staff_role >= 5:
             buttons = ["Reports", "Inventory", "Events"]
             
-            
+        
+        # Insert a prefix button Home and a suffix button logout.
         buttons.insert(0, "Home")
         buttons.insert(len(buttons), "Logout")
         
@@ -120,14 +128,12 @@ class Main(object):
         btn_frame.grid_columnconfigure(len(buttons)+OFFSET_LOGOUT_BTN, weight=1)
             
         for i in range(len(buttons)):
-            btn = tk.Button(btn_frame, text=buttons[i], width=100//len(buttons))
+            btn = tk.Button(btn_frame, text=buttons[i], width=100 // len(buttons))
             btn.grid(row=0, column=i, sticky=tk.NE, padx=3)
             btn_dict[buttons[i]] = btn
             
         # Logout button. Make it obvious.
         btn_dict['Logout'].configure(background='#d9534f')
-        
-        # print((len(buttons)),btn_frame.grid_size()[0])
 
 class Application(object):
     def __init__(self, **args):
@@ -156,6 +162,9 @@ class Application(object):
         # An interface for login built ontop of main_window
         login_interface = login.Login(main_window)
         if login_interface.is_logged_in():
+            
+            # Display the navigation system based on the database staff role.
+            # Acts as an additional security measure for checking if someone should be allowed to do specific tasks.
             login_interface.parent.display_navbar(staff_role = login_interface.staff_role)
         
 

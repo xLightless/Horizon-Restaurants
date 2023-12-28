@@ -11,7 +11,7 @@ from client.interface.authentication import AuthenticateUser
 from client.interface.toolkits.typography.font import *
 from client.interface.toolkits import inputs, headings
 from client.interface.wm_screens.inventory import Inventory
-from client.settings import INITIAL_HEIGHT, INITIAL_WIDTH, NAVBAR_HEIGHT, BACKGROUND_COLOR
+from client.settings import INITIAL_HEIGHT, INITIAL_WIDTH, NAVBAR_HEIGHT, BACKGROUND_COLOR, MAIN_GRID_BOXES
 from client.errors import InvalidCredentialsError
 from authors import show_creators
 from tkinter import messagebox
@@ -193,8 +193,6 @@ class Login2(Staff):
         
     def get_tbx_length(self, tbx_input):
         return len(tbx_input.get())
-    
-from main import Main
 
 class Login(object):
     def __init__(self, parent):
@@ -205,28 +203,135 @@ class Login(object):
         # Check if the parent is of the main interface.
         if str(type(self.parent)) == "<class '__main__.Main'>":
             self.banner:ttk.Frame = self.parent.frame_banner_1
-            self.containers = [
-                self.parent.frame_content_1,
-                self.parent.frame_content_2,
-                self.parent.frame_content_3
+            container_titles = ["", "Login with Staff ID", ""]
+            buttons=[
+                [1, 2, 3], [4, 5, 6], [7, 8, 9], ["Login", 0, "<<"]
             ]
             
-        self.containers[1].grid_rowconfigure(0, weight=1)
-        self.containers[1].grid_rowconfigure(5, weight=1)
-        self.containers[1].grid_columnconfigure(0, weight=1)
-        self.containers[1].grid_columnconfigure(5, weight=1)
+            # self.parent.style.configure("frame_content_1.TFrame")
             
-        lbl_frame_title = ["", "Login with Staff ID", ""]
-        frame_title = [ttk.Label(self.containers[i], text=lbl_frame_title[i]) for i in range(len(self.containers)) if lbl_frame_title[i] != ""]
-        for i in range(len(frame_title)):
-            frame_title[i].grid(row=0, column=0, sticky=tk.NSEW)
+            main_frame = tk.Frame(self.parent.frame_content_2)
+            main_frame.grid(sticky=tk.NSEW)
+            main_frame.grid_rowconfigure(0, weight=0)
+            main_frame.grid_rowconfigure(1, weight=1)
+            main_frame.grid_rowconfigure(2, weight=1)
+            main_frame.grid_columnconfigure(0, weight=1)
             
-        # buttons= [
-        #     [1, 2, 3], [4, 5, 6], [7, 8, 9], ["Login", 0, "<<"]
-        # ]
-        # for row in range(len(buttons)):
-        #     for col in range(len(buttons[row])):
-        #         ttk.Button(self.containers[1], )
+            # Title frame for login        
+            title_frame = ttk.Frame(main_frame, style="title_frame.TFrame", border=3, relief=tk.SOLID)
+            title_frame.grid(row=0, column=0, sticky=tk.NSEW)
+            title_frame.grid_columnconfigure(0, weight=1)
+            title_frame.grid_columnconfigure(1, weight=1)
+            title_frame.grid_columnconfigure(2, weight=1)
+            
+            # Title
+            title = headings.Heading6(title_frame, text="POS Management System")
+            title.label.grid(row=0, column=1, sticky=tk.NSEW)
+            title.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
+            
+            # Error frame for login
+            input_frame = tk.Frame(main_frame) # style="input_frame.TFrame"
+            input_frame.grid(row=1, column=0, sticky=tk.NSEW)
+            input_frame.grid_rowconfigure(0, weight=1)
+            input_frame.grid_rowconfigure(1, weight=1)
+            # input_frame.grid_rowconfigure(2, weight=1)
+            
+            input_frame.grid_columnconfigure(0, weight=1)
+            input_frame.grid_columnconfigure(1, weight=1)
+            input_frame.configure(background='#191919')
+
+            # Read only input box
+            input_box = inputs.InputBox(input_frame, label_text="Staff ID: ")
+            input_box.get_frame().grid(row=0, column=0, columnspan=2, rowspan=2)
+            input_box.get_frame().configure(background='#191919')
+            input_box.input_box_label.configure(background='#191919', fg='#FFFFFF')
+            
+            # Content frame for login
+            content_frame = tk.Frame(main_frame) # style="content_frame.TFrame"
+            content_frame.grid(row=2, column=0, sticky=tk.NSEW)
+            content_frame.configure(background='#191919', padx=32, pady=32)
+            
+            # Number pad
+            # number_pad = [ttk.Button(content_frame, style=f"{row}_{col}.TButton") for row in range(len(buttons)) for col in range(len(buttons[row]))]
+            for row in range(len(buttons)):
+                for col in range(len(buttons[row])):
+                    
+                    # Configure the grid to expand each row/col to the correct size throughout.
+                    content_frame.grid_rowconfigure(row, weight=1)
+                    content_frame.grid_columnconfigure(col, weight=1)
+                    
+                    # Create a button for each grid position
+                    btn = ttk.Button(content_frame, style=f"{row}_{col}.TButton", text=buttons[row][col], command=None)
+                    btn.grid(row=row, column=col, sticky=tk.NSEW)
+                    self.parent.style.configure(f"{row}_{col}.TButton", background=BACKGROUND_COLOR)
+                    
+            
+            
+            self.parent.style.configure("title_frame.TFrame", background=BACKGROUND_COLOR)
+            # self.parent.style.configure("input_frame.TFrame", background=BACKGROUND_COLOR)
+            # self.parent.style.configure("content_frame.TFrame", background=BACKGROUND_COLOR)
+                
+            
+            # for i in range(len(self.parent.containers)):
+                
+            #     # Create a slave frame
+            #     frame = ttk.Frame(self.parent.containers[i], style=f"frame_{self.parent.containers[i]}.TFrame")
+            #     frame.grid(row=0, column=0, sticky=tk.NSEW)
+            #     frame.grid_rowconfigure(2, weight=1)
+            #     frame.grid_columnconfigure(0, weight=1)
+            #     self.parent.style.configure(f"frame_{self.parent.containers[i]}.TFrame", bd=1, relief=tk.SOLID, background=BACKGROUND_COLOR)
+                
+            #     # Create a title for each grid box and have it be placed in slave frame
+            #     frame_title = headings.Heading6(frame, text=(container_titles[i]))
+            #     frame_title.label.grid(row=0, column=0, sticky=tk.NSEW)
+            #     frame_title.label.configure(width=100 // MAIN_GRID_BOXES, background=BACKGROUND_COLOR, border=1, relief=tk.SOLID, fg="#FFFFFF")
+                
+            #     # Create a grid child slave frame
+            #     if i != 1:
+            #         child_frame = ttk.Frame(frame, style=f"{self.parent.containers[i]}.TFrame", border=1, relief=tk.SOLID, padding=12)
+            #         child_frame.grid(row=1, column=0, rowspan=2, sticky=tk.NSEW)
+                
+
+            #     if i==1:
+            #         child_frame = ttk.Frame(frame, style=f"{self.parent.containers[i]}.TFrame", border=1, relief=tk.SOLID, padding=12)
+            #         child_frame.grid(row=1, column=0, rowspan=2, sticky=tk.NSEW)
+            #         child_frame.grid_rowconfigure(0, weight=1)
+            #         child_frame.grid_columnconfigure(2, weight=1)
+                    
+            #         self.parent.style.configure(f"{self.parent.containers[i]}.TFrame", background='red')
+                    
+            #         # input_box_frame = ttk.Frame(child_frame, style="input_box_frame.TFrame", padding=3)
+            #         # input_box_frame.grid(row=0, column=0, sticky=tk.NSEW)
+            #         # input_box_frame.grid_rowconfigure(0, weight=1)
+            #         # input_box_frame.grid_columnconfigure(0, weight=1)
+                    
+            #         # button_box_frame = ttk.Frame(child_frame, style="button_box_frame.TFrame", padding=3)
+            #         # button_box_frame.grid(row=1, column=0, sticky=tk.NSEW)
+            #         # button_box_frame.grid_rowconfigure(0, weight=1)
+            #         # button_box_frame.grid_columnconfigure(0, weight=1)
+                    
+            #         # self.parent.style.configure(f"{self.parent.containers[i]}.TFrame", background='lightblue')
+            #         # self.parent.style.configure("input_box_frame.TFrame", background='yellow')
+            #         # self.parent.style.configure("button_box_frame.TFrame", background='red')
+
+            #         # # lbl = ttk.Label(input_box_frame, text="asdasd", padding=10)
+            #         # # lbl.grid()
+            #         # # lbl.configure()
+
+
+            #         # Configure the login buttons to proportionally fit the button_box_frame.
+            #         for row in range(len(buttons)):
+            #             for col in range(len(buttons[row])):
+            #                 btn = ttk.Button(child_frame, text=buttons[row][col], width=100//len(buttons))
+            #                 btn.grid(row=row, column=col, sticky=tk.NSEW)
+                            
+                            
+                            
+            #                 btn.configure(style=f"btn_{buttons[row][col]}.TButton")
+            #                 self.parent.style.configure(f"btn_{buttons[row][col]}.TButton", background=BACKGROUND_COLOR)
+                
+            # # self.parent.style.configure(".!frame.!frame3.TFrame", background='red')
+            
         
         
         
