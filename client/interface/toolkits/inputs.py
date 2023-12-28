@@ -19,14 +19,14 @@ class InputBox(Characters):
         self.tkfont = Font(root=interface, **self.font_style)
         self.input_box_label = Label(master=self.__subinterface, text=label_text, font=self.tkfont) 
         self.input_box = Entry(self.__subinterface, font=self.tkfont, bd=tbx_border_size, relief=tbx_relief, width=tbx_width, justify=LEFT, state=state)
-        self.input_box.propagate(flag=propagate)
+        # self.input_box.propagate(flag=propagate)
         
         # Check if the label is empty. No need to display an empty label.
         if len(label_text) != 0:
             self.input_box_label.pack(side=LEFT)
         self.input_box.pack(side=RIGHT)
         
-    def display(self, relx=0, rely=0, grid:list=[]):
+    def display(self, relx=0, rely=0, grid:list=[], sticky=None):
         """Display the input box on the interface via place(). If no args are given then reverts to using (x,y).
 
         Args:
@@ -42,7 +42,9 @@ class InputBox(Characters):
         
         if len(grid) == 0:
             return self.__subinterface.place(relx=relx, rely=rely)
-        return self.__subinterface.grid(row=grid[0], column=grid[1])
+        
+        if len(grid)>0:
+            return self.__subinterface.grid(row=grid[0], column=grid[1]) if sticky == None else self.__subinterface.grid(row=grid[0], column=grid[1], stick=sticky)
         
     def get_size(self):
         """Returns the width and height of an input box. """

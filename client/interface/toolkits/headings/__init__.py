@@ -1,5 +1,5 @@
 from tkinter.font import Font
-from tkinter import Label, Entry
+from tkinter.ttk import Label, Entry
 from tkinter import LEFT, RIGHT, CENTER
 from client.interface.toolkits.typography.font import *
 
