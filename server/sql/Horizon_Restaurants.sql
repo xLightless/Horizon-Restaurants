@@ -49,7 +49,7 @@ DROP TABLE IF EXISTS `branch_tables`;
 CREATE TABLE `branch_tables` (
   `table_id` int NOT NULL,
   `branch_id` int DEFAULT NULL,
-  `capacity` int DEFAULT NULL,
+  `table_capacity` int DEFAULT NULL,
   PRIMARY KEY (`table_id`),
   KEY `branch_id_idx` (`branch_id`),
   CONSTRAINT `branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`branch_id`)
@@ -123,11 +123,12 @@ DROP TABLE IF EXISTS `customer`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `customer` (
-  `payment_id` int NOT NULL,
-  `customer_name` varchar(45) DEFAULT NULL,
+  `customer_id` int NOT NULL,
+  `customer_firstname` varchar(45) DEFAULT NULL,
+  `customer_lastname` varchar(45) DEFAULT NULL,
   `customer_phone` char(10) DEFAULT NULL,
   `customer_allergens` int NOT NULL,
-  PRIMARY KEY (`payment_id`),
+  PRIMARY KEY (`customer_id`),
   KEY `customer_allergens_idx` (`customer_allergens`),
   CONSTRAINT `customer_allergens` FOREIGN KEY (`customer_allergens`) REFERENCES `allergens` (`allergen_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -139,7 +140,7 @@ CREATE TABLE `customer` (
 
 LOCK TABLES `customer` WRITE;
 /*!40000 ALTER TABLE `customer` DISABLE KEYS */;
-INSERT INTO `customer` VALUES (1,'Binayam Gurung','2147483647',15),(2,'Bob Gurung','7407385753',2);
+INSERT INTO `customer` VALUES (1,'Binayam Gurung',NULL,'2147483647',15),(2,'Bob Gurung',NULL,'7407385753',2);
 /*!40000 ALTER TABLE `customer` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -224,6 +225,38 @@ LOCK TABLES `orders` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `payments`
+--
+
+DROP TABLE IF EXISTS `payments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `payments` (
+  `payment_id` int NOT NULL AUTO_INCREMENT,
+  `customer_id` int NOT NULL,
+  `reservation_Id` int NOT NULL,
+  `order_id` int NOT NULL,
+  `total_price` int DEFAULT NULL,
+  PRIMARY KEY (`payment_id`),
+  KEY `customer_id_idx` (`customer_id`),
+  KEY `reservation_id_idx` (`reservation_Id`),
+  KEY `order_id_idx` (`order_id`),
+  CONSTRAINT `customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`),
+  CONSTRAINT `order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`),
+  CONSTRAINT `reservaton_id` FOREIGN KEY (`reservation_Id`) REFERENCES `reservations` (`reservation_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `payments`
+--
+
+LOCK TABLES `payments` WRITE;
+/*!40000 ALTER TABLE `payments` DISABLE KEYS */;
+/*!40000 ALTER TABLE `payments` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `reservations`
 --
 
@@ -293,4 +326,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-12-29 17:07:31
+-- Dump completed on 2023-12-29 20:15:47

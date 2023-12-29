@@ -4,19 +4,10 @@ from client.settings import *
 from client.interface.toolkits import headings
 from typing import Optional
 
+from server.sql.database import Database
+
 import tkinter as tk
 import tkinter.ttk as ttk
-import asyncio
-import logging
-import traceback
-import typing
-
-# Configure the application to set logging levels in terminal.
-# logging.basicConfig(
-#     level=logging.DEBUG,
-#     format='%(asctime)s - %(levelname)s - %(message)s',
-#     datefmt='%Y-%m-%d %H:%M:%S'
-# )
 
 app_settings = {
     "title" : TITLE,
@@ -60,17 +51,7 @@ class Main(object):
         self.frame_content_3.grid_columnconfigure(0, weight=1)
         
         self.containers = [self.frame_content_1, self.frame_content_2, self.frame_content_3]
-        
-        # for i in range(1, MAIN_GRID_BOXES+1):
-        #     frame = ttk.Frame(parent, style=f"frame_content_{i}.TFrame", width=100 // MAIN_GRID_BOXES)
-        #     frame.grid(row=1, column=i, sticky=tk.NSEW, padx=3, pady=3)
-        #     frame.grid_rowconfigure(0, weight=1)
-        #     frame.grid_columnconfigure(0, weight=1)
-            
-        #     # Add each container to a dictionary to modify efficiently.
-        #     self.containers[f"frame_content_{i}.TFrame"] = frame
-            
-            
+
         # Frame banner content
         self.lbl_title = headings.Heading6(self.frame_banner_1, text="Horizon Restaurants")
         self.lbl_title.label.grid(row=0, column=0, sticky=tk.W)
@@ -176,12 +157,11 @@ class Application(object):
         # The first screen and fall back screen when all gets destroyed
         main_window = Main(main_frame)
         
-        # Some dummy staff role
-        # main_window.display_navbar(staff_role=5)
-        
         # Login (Logged in to system)
         login_interface = login.Login(main_window)
         login_interface.display()
+        
+        
         if login_interface.is_logged_in():
             
             # If logged in hide login interface
@@ -203,21 +183,32 @@ class Application(object):
         login_button = len(buttons)-3
         backspace_button = len(buttons)-1
         
+        # Login number keys
+        for row in range(len(login_interface.main_frame.winfo_children())):
+            for col in range(len(login_interface.main_frame.winfo_children()[row].winfo_children())):
+                btn = login_interface.main_frame.winfo_children()[row].winfo_children()[col]
+                if '!button' in btn.winfo_name():
+                    if (btn.cget("text") != "Login") and (btn.cget("text") != "<<"):
+                        btn.configure(command=lambda x=str(btn.cget("text")): login_interface.on_tbx_insert(login_interface.input_box.input_box, x))
+                        
+                    # if (btn.cget("text") == "Login"):
+                    #    btn.configure(command=lambda x=login_interface.input_box.input_box.get(): print(x)) 
+                    
         # Login commands
-        buttons[login_button].configure(command=lambda:print("LOGIN"))
-        buttons[backspace_button].configure(command=lambda:print("<<"))
-            
-            
-            # Menu
-            
-            # Orders
-            
-            # Payments
-            
-            # Kitchen/Inventory
-            
-            # Reports
+        buttons[login_button].configure(command=lambda: login_interface.login(login_interface.input_box.input_box.get()))      
+        buttons[backspace_button].configure(command=lambda: login_interface.on_tbx_delete(login_interface.input_box.input_box))
         
+        print(login_interface.is_logged_in())
+                    
+        # Menu        
+        
+        # Orders
+        
+        # Payments
+        
+        # Kitchen/Inventory
+        
+        # Reports
 
 if __name__ == '__main__':
     

@@ -13,10 +13,13 @@ from client.interface.toolkits import inputs, headings
 from client.interface.wm_screens.inventory import Inventory
 from client.settings import INITIAL_HEIGHT, INITIAL_WIDTH, NAVBAR_HEIGHT, BACKGROUND_COLOR, MAIN_GRID_BOXES
 from client.errors import InvalidCredentialsError
-from authors import show_creators
-from tkinter import messagebox
+from server.sql.database import database
+
 import tkinter as tk
 import tkinter.ttk as ttk
+import sys
+import datetime
+import pandas as pd
 
 
 # Login Interface options
@@ -56,142 +59,12 @@ class Staff(object):
                 print(widget)
                 
             return screen
-                
-                
-            
-    
+
     def get_checked_inventory(self, inventory: Inventory) -> dict:
         return
     
     def request_login_information(self) -> tuple:
         return (self.staff_id, self.staff_name)
-
-class Login2(Staff):
-    """ Login Interface component for the HRMS System. """
-    
-    def __init__(self, interface:Interface):
-        super().__init__()
-        self.is_logged_in = False
-        self.i = interface
-        
-        # Initialise a Login Interface Frame
-        self.i_frame = tk.Frame(interface.master, width=INITIAL_WIDTH, height=INITIAL_HEIGHT)
-        
-        # Create a subframe for the UI
-        i_top = tk.Frame(self.i_frame, width=INITIAL_WIDTH, height=NAVBAR_HEIGHT)
-        i_top.pack_propagate(False)
-        i_top.pack(side=tk.TOP)
-        
-        # Pack a heading for the subframe
-        lbl_restaurants = headings.Heading6(i_top, text="Horizon Restaurants Ltd.")
-        lbl_restaurants.label.configure(bg="#1e1e1e", fg='white') # Add dark theme
-        lbl_restaurants.label.pack(side="top", fill="both", expand=True)
-        
-        # Create a new subframe for the UI
-        i_bottom = tk.Frame(self.i_frame, width=INITIAL_WIDTH, height=(INITIAL_HEIGHT - NAVBAR_HEIGHT), padx=3, pady=3)
-        i_bottom.configure(bg="#1e1e1e")
-        i_bottom.pack_propagate(False)
-        
-        # Enter login pin
-        lbl_frame = tk.LabelFrame(i_bottom, text="", width=i_bottom.winfo_reqwidth()/2, height=i_bottom.winfo_reqheight())
-        lbl_frame.configure(bg="#1e1e1e", fg='white', padx=3, pady=3)
-        
-        # Create frame seperation for the PIN Entry
-        lbl_frame_top = tk.Frame(lbl_frame, width=lbl_frame.winfo_reqwidth(), height=NAVBAR_HEIGHT)
-        lbl_frame_top.configure(bg="#1e1e1e")
-        
-        lbl_frame_bottom = tk.Frame(lbl_frame, width=lbl_frame.winfo_reqwidth(), height=lbl_frame_top.winfo_reqwidth()-NAVBAR_HEIGHT)
-        lbl_frame_bottom.configure(bg="#1e1e1e")
-        lbl_frame_bottom.grid_propagate(False)
-        lbl_frame_bottom.pack_propagate(False)
-        lbl_frame_bottom.propagate(False)
-        
-        # Disabled Input box for displaying staff id
-        lbl_frame_top_heading = headings.TextLabel(lbl_frame_top, text="Enter your Staff ID:")
-        lbl_frame_top_heading.label.configure(bg="#1e1e1e", fg='white')
-        lbl_frame_top_heading.label.grid(row=0, column=0)
-        tbx_input_disabled = inputs.InputBox(lbl_frame_top, label_text="", tbx_width=20, tbx_border_size=0, state='readonly')
-        tbx_input_disabled.input_box.configure(fg='red')
-        # tbx_input_disabled.set_input_state(state=tk.DISABLED)
-        tbx_input_disabled.x += (lbl_frame.winfo_reqwidth()/2) - (tbx_input_disabled.input_box.winfo_reqwidth()/2) - (tbx_input_disabled.input_box_label.winfo_reqwidth()/2)
-        # tbx_input_disabled.y += (lbl_frame.winfo_reqheight()/2) - (tbx_input_disabled.input_box.winfo_reqheight()/2)
-        tbx_input_disabled.display(grid=[1, 0])
-        
-        # Input to entry box via Buttons
-        input_btn_box = inputs.ButtonBox(
-            lbl_frame_bottom, 
-            buttons=[
-                [1, 2, 3], 
-                [4, 5, 6], 
-                [7, 8, 9], 
-                ["Login", 0, "<<"]
-                ]
-            )
-        
-
-        for btn in input_btn_box.btn_list:
-            idx = input_btn_box.btn_list.index(btn)
-            if (idx != 9) or (idx != 11):
-                btn.configure(command = lambda x = str(btn.cget('text')): self.on_tbx_insert(tbx_input_disabled.input_box, x))
-            if idx == 11:
-                btn.configure(command = lambda: self.on_tbx_delete(tbx_input_disabled.input_box))
-            if idx == 9:
-                btn.configure(
-                    command = lambda x=tbx_input_disabled.input_box: (self.login(x), self.i_frame.forget())
-                    if self.get_tbx_length(x)>=STAFF_ID__MIN_LENGTH 
-                    else messagebox.showwarning("Authentication Error!", InvalidCredentialsError())
-                )
-            
-        # tbx_input_disabled.input_box.configure(textvariable=disabled_btn_text.set(disabled_btn_text + btn_text))
-
-
-
-        i_bottom.pack(side=tk.BOTTOM)
-        lbl_frame_top.pack(side=tk.TOP)
-        lbl_frame_bottom.pack(side=tk.BOTTOM)
-        lbl_frame.pack()
-        lbl_frame.pack()
-        self.i_frame.pack(fill="both", expand=True)    
-
-    def login(self, staff_id, password:int = None):
-        """Attempts to login the user with the requested access method."""
-        
-        # Check the parameter type
-        if isinstance(staff_id, Entry):
-            self.staff_id = staff_id.get()
-        else:
-            self.staff_id = staff_id
-            
-        # Get the database information about the user
-        # db_staff_id = Database().get_record_row(table, staff_id)
-        # self.staff_name = db_staff_id['name']
-        self.is_logged_in = True
-        if self.is_logged_in == True:
-            print("Getting database details, logging in...")
-            
-            # If logged in, display menu.
-            self.i.show_nav_menu()
-            
-        return self.is_logged_in
-    
-    def require_login_details(self):
-        return
-    
-    def verify_details(self) -> bool:
-        return
-
-    def on_tbx_insert(self, tbx_input, args):
-        tbx_input.configure(state="normal")
-        tbx_input.insert(tk.END, args)
-        tbx_input.configure(state="readonly")
-        
-    def on_tbx_delete(self, tbx_input):
-        tbx_input.configure(state="normal")
-        tbx_input.delete(0, tk.END)
-        tbx_input.configure(state="readonly")
-        
-    def get_tbx_length(self, tbx_input):
-        return len(tbx_input.get())
 
 class Login(object):    
     def __init__(self, parent):
@@ -251,6 +124,8 @@ class Login(object):
             input_box.get_frame().configure(background='#191919')
             input_box.input_box_label.configure(background='#191919', fg='#FFFFFF')
             
+            self.input_box = input_box
+            
             # Content frame for login
             content_frame = tk.Frame(main_frame) # style="content_frame.TFrame"
             content_frame.grid(row=2, column=0, sticky=tk.NSEW)
@@ -279,6 +154,36 @@ class Login(object):
         if str(type(self.parent)) == "<class '__main__.Main'>":
             return True if self.__logged_in else False
         return InvalidCredentialsError()
+    
+    def login(self, staff_id):        
+        try:
+            int(staff_id)
+        except ValueError:
+            return print(InvalidCredentialsError())
+        
+        # Get information about the user
+        try:
+            record = database.get_table_records_of_key("staff", "account_number", staff_id, True)
+            record = record.to_dict('records')[0]
+            
+            # If found, create an instance of the staff id user
+            staff = Staff()
+            self.staff_role = record['branch_role']
+            staff.staff_id = record['account_number']
+            staff.staff_name = f"{record['staff_first_name']} {record['staff_last_name']}"
+            
+            print(f"Welcome, {staff.staff_name}! You've logged in at: {datetime.datetime.utcnow()}.")
+        except IndexError:
+            return print(InvalidCredentialsError())
+        
+        # If no errors and presuming credentials are accepted. Login.
+        # Also, destroy any login interface children.
+        self.parent.destroy_window_children(self.parent.containers)
+        self.parent.display_navbar(self.staff_role)
+        self.__logged_in = True
+        return self.is_logged_in()
+        
+        
     
     def on_tbx_insert(self, tbx_input, args):
         tbx_input.configure(state="normal")

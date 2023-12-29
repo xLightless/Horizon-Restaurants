@@ -416,3 +416,7 @@ class Database(object):
         query = "INSERT INTO %s VALUES (%s, %s)" % (table, pk_id, values)
         self.cursor.execute(query)
         self.__db.commit()
+        
+        
+        
+database = Database(database="horizon_restaurants")

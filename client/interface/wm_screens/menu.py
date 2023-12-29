@@ -7,12 +7,13 @@
 # --------------------------------------------------------------------------------------- #
 
 from client.interface.wm_screens.inventory import Inventory
-
+import tkinter.ttk as ttk
 
 class Menu(object):
-    def __init__(self):
+    def __init__(self, parent):
         """ Construct a tkinter frame for Menu. """
         self._inventory = Inventory()
+        self.parent = parent
     
     def get_menu(self):
         """ Gets the menu and returns all items. """
