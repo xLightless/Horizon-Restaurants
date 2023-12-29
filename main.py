@@ -9,6 +9,7 @@ import tkinter.ttk as ttk
 import asyncio
 import logging
 import traceback
+import typing
 
 # Configure the application to set logging levels in terminal.
 # logging.basicConfig(
@@ -108,8 +109,7 @@ class Main(object):
         btn_frame.grid(row=0, column=2, rowspan=2, columnspan=2, sticky=tk.NSEW, padx=16, pady=16)
         # btn_frame.configure(bd=1, relief=tk.SOLID)
         
-        # # Create a button and place it on the child frame.
-        
+        # Create a button and place it on the child frame.
         buttons = []
         btn_dict = {}
         
@@ -127,6 +127,7 @@ class Main(object):
         btn_frame.grid_columnconfigure(0, weight=1)
         btn_frame.grid_columnconfigure(len(buttons)+OFFSET_LOGOUT_BTN, weight=1)
             
+        # Navigation Bar buttons
         for i in range(len(buttons)):
             btn = tk.Button(btn_frame, text=buttons[i], width=100 // len(buttons))
             btn.grid(row=0, column=i, sticky=tk.NE, padx=3)
@@ -134,6 +135,22 @@ class Main(object):
             
         # Logout button. Make it obvious.
         btn_dict['Logout'].configure(background='#d9534f')
+        return btn_dict
+        
+    def destroy_window_children(self, window:list | tk.Frame | ttk.Frame):
+        """Destroy all child elements of a main tkinter Frame. """
+        
+        if isinstance(window, list):
+            for i in range(len(window)):
+                child = window[i].winfo_children()
+                if len(child) != 0:
+                    for j in range(len(child)):
+                        child[j].destroy()
+            return
+        window.destroy()
+        
+    def display_window_children(self, window):
+        return window.display()
 
 class Application(object):
     def __init__(self, **args):
@@ -149,29 +166,66 @@ class Application(object):
         self.main.master.grid_columnconfigure(0, weight=1)
         
         # Add styling
-        style = ttk.Style()
+        self.style = ttk.Style()
         
         # Add a main frame to master
         main_frame = ttk.Frame(self.main.master, style='main_frame.TFrame', width=self.main.master.winfo_reqwidth(), height=self.main.master.winfo_reqheight())
         main_frame.grid(row=0, column=0, sticky=tk.NSEW)        
-        style.configure("main_frame.TFrame", background=BACKGROUND_COLOR, bd=1, relief=tk.SOLID)
+        # style.configure("main_frame.TFrame", background=BACKGROUND_COLOR, bd=1, relief=tk.SOLID)
         
         # The first screen and fall back screen when all gets destroyed
         main_window = Main(main_frame)
         
-        # An interface for login built ontop of main_window
+        # Some dummy staff role
+        # main_window.display_navbar(staff_role=5)
+        
+        # Login (Logged in to system)
         login_interface = login.Login(main_window)
+        login_interface.display()
         if login_interface.is_logged_in():
+            
+            # If logged in hide login interface
+            # main_window.destroy_window_children(main_window.containers)
             
             # Display the navigation system based on the database staff role.
             # Acts as an additional security measure for checking if someone should be allowed to do specific tasks.
-            login_interface.parent.display_navbar(staff_role = login_interface.staff_role)
+            navbar = login_interface.parent.display_navbar(staff_role = login_interface.staff_role)
+            
+            # Main
+            navbar['Logout'].configure(
+                command=lambda: (
+                    main_window.destroy_window_children(main_window.containers)
+                )
+            )
+        
+        # Login (Not logged in to system)
+        buttons = login_interface.main_frame.winfo_children()[2].winfo_children()
+        login_button = len(buttons)-3
+        backspace_button = len(buttons)-1
+        
+        # Login commands
+        buttons[login_button].configure(command=lambda:print("LOGIN"))
+        buttons[backspace_button].configure(command=lambda:print("<<"))
+            
+            
+            # Menu
+            
+            # Orders
+            
+            # Payments
+            
+            # Kitchen/Inventory
+            
+            # Reports
         
 
 if __name__ == '__main__':
     
+    # Initialise the entire application and mapped settings
     app = Application(**app_settings)
-    app.main.master.mainloop()
     
     # Add any new settings after initialisation like below:
     # main_window.settings['SETTING_NAME'] = SETTING_VALUE
+    
+    # Run the tkinter event loop to control continuity
+    app.main.master.mainloop()
