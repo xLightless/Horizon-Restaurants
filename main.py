@@ -75,8 +75,10 @@ class Main(object):
         self.lbl_title.label.configure(background=BACKGROUND_COLOR, fg='#FFFFFF')
         self.lbl_branch_id.label.configure(background=BACKGROUND_COLOR, fg='#FFFFFF')
         self.style.configure("frame_content_1.TFrame", background=BACKGROUND_COLOR)
-        self.style.configure("frame_content_2.TFrame", background=BACKGROUND_COLOR)
+        self.style.configure("frame_content_2.TFrame", background='yellow')
         self.style.configure("frame_content_3.TFrame", background=BACKGROUND_COLOR)
+        
+        print(self.frame_banner_1.winfo_children())
         
         
     def display_navbar(self, staff_role):
@@ -88,7 +90,6 @@ class Main(object):
         # # Create a child frame inside the banner, give it a grid row/col then update.
         btn_frame = tk.Frame(self.frame_banner_1, background=BACKGROUND_COLOR)
         btn_frame.grid(row=0, column=2, rowspan=2, columnspan=2, sticky=tk.NSEW, padx=16, pady=16)
-        # btn_frame.configure(bd=1, relief=tk.SOLID)
         
         # Create a button and place it on the child frame.
         buttons = []
@@ -115,7 +116,15 @@ class Main(object):
             btn_dict[buttons[i]] = btn
             
         # Logout button. Make it obvious.
-        btn_dict['Logout'].configure(background='#d9534f')
+        btn_dict['Logout'].configure(background='#d9534f', command=lambda: exit())
+        
+            
+        # Seperately destroy children containers rather than main_window.containers to prevent it removing top level sub frames.
+        # Using this function will destory any elements that were previously binded to these container frames.
+        self.destroy_window_children(self.containers[0]),
+        self.destroy_window_children(self.containers[1]),
+        self.destroy_window_children(self.containers[2]),
+        
         return btn_dict
         
     def destroy_window_children(self, window:list | tk.Frame | ttk.Frame):
@@ -127,6 +136,10 @@ class Main(object):
                 if len(child) != 0:
                     for j in range(len(child)):
                         child[j].destroy()
+                        
+                ## Not quite sure about this one therefore its temporary.
+                # if len(child) == 0:
+                #     child[j].destroy()
             return
         window.destroy()
         
@@ -161,23 +174,6 @@ class Application(object):
         login_interface = login.Login(main_window)
         login_interface.display()
         
-        
-        if login_interface.is_logged_in():
-            
-            # If logged in hide login interface
-            # main_window.destroy_window_children(main_window.containers)
-            
-            # Display the navigation system based on the database staff role.
-            # Acts as an additional security measure for checking if someone should be allowed to do specific tasks.
-            navbar = login_interface.parent.display_navbar(staff_role = login_interface.staff_role)
-            
-            # Main
-            navbar['Logout'].configure(
-                command=lambda: (
-                    main_window.destroy_window_children(main_window.containers)
-                )
-            )
-        
         # Login (Not logged in to system)
         buttons = login_interface.main_frame.winfo_children()[2].winfo_children()
         login_button = len(buttons)-3
@@ -190,16 +186,11 @@ class Application(object):
                 if '!button' in btn.winfo_name():
                     if (btn.cget("text") != "Login") and (btn.cget("text") != "<<"):
                         btn.configure(command=lambda x=str(btn.cget("text")): login_interface.on_tbx_insert(login_interface.input_box.input_box, x))
-                        
-                    # if (btn.cget("text") == "Login"):
-                    #    btn.configure(command=lambda x=login_interface.input_box.input_box.get(): print(x)) 
-                    
+
         # Login commands
-        buttons[login_button].configure(command=lambda: login_interface.login(login_interface.input_box.input_box.get()))      
+        buttons[login_button].configure(command=lambda: (login_interface.login(login_interface.input_box.input_box.get()), main_window.display_navbar(login_interface.staff_role)))     
         buttons[backspace_button].configure(command=lambda: login_interface.on_tbx_delete(login_interface.input_box.input_box))
-        
-        print(login_interface.is_logged_in())
-                    
+          
         # Menu        
         
         # Orders

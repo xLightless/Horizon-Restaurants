@@ -37,7 +37,6 @@ class Staff(object):
     def __init__(self):
         self.staff_id:str = f"{0}"
         self.staff_name:str = ""
-        self.is_logged_in = False
         
     def accept_order(self):
         return
@@ -66,9 +65,10 @@ class Staff(object):
     def request_login_information(self) -> tuple:
         return (self.staff_id, self.staff_name)
 
-class Login(object):    
+class Login(object):
+    __logged_in = False   
     def __init__(self, parent):
-        self.__logged_in = False
+        # self.__logged_in = False
         self.parent = parent
         self.staff_role = 6
             
@@ -170,7 +170,7 @@ class Login(object):
             staff = Staff()
             self.staff_role = record['branch_role']
             staff.staff_id = record['account_number']
-            staff.staff_name = f"{record['staff_first_name']} {record['staff_last_name']}"
+            staff.staff_name = f"{record['staff_first_name']}{record['staff_last_name']}"
             
             print(f"Welcome, {staff.staff_name}! You've logged in at: {datetime.datetime.utcnow()}.")
         except IndexError:
@@ -178,11 +178,12 @@ class Login(object):
         
         # If no errors and presuming credentials are accepted. Login.
         # Also, destroy any login interface children.
-        self.parent.destroy_window_children(self.parent.containers)
-        self.parent.display_navbar(self.staff_role)
-        self.__logged_in = True
-        return self.is_logged_in()
-        
+        # self.parent.display_navbar(self.staff_role)
+        # self.__class__.__logged_in = True
+        # self.parent.destroy_window_children(self.parent.containers[1])
+        # self.parent.display_navbar(self.staff_role)
+        # # self.parent.__init__(self.parent.)
+        # # return self.is_logged_in()
         
     
     def on_tbx_insert(self, tbx_input, args):
