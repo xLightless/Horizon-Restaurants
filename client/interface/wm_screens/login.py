@@ -67,9 +67,8 @@ class Staff(object):
         return (self.staff_id, self.staff_name)
 
 class Login(object):
-    __logged_in = False   
+    logged_in = False   
     def __init__(self, parent):
-        # self.__logged_in = False
         self.parent = parent
         self.staff_role = 6
             
@@ -162,17 +161,15 @@ class Login(object):
                     login_buttons[self.buttons[row][col]].configure(command=lambda: self.input_box.on_tbx_delete(self.input_box.input_box))
                 elif self.buttons[row][col] == "Login":
                     login_buttons[self.buttons[row][col]].bind(
-                        "<Button>", func=lambda _: self.login_user(self.input_box.input_box.get())
+                        "<Button>", func=lambda _: (self.parent.display_navbar(self.staff_role) if self.login_user(self.input_box.input_box.get()) == True else "")
                     )
                 else:
                     login_buttons[self.buttons[row][col]].configure(command=lambda x=str(login_buttons[self.buttons[row][col]].cget("text")): self.input_box.on_tbx_insert(self.input_box.input_box, x))
-                            
 
-    def is_logged_in(self):
-        # Check that the parent is only from the Main object else ignore it.
-        if str(type(self.parent)) == "<class '__main__.Main'>":
-            return True if self.__logged_in else False
-        return InvalidCredentialsError()
+    # def is_logged_in(self):
+    #     # Check that the parent is only from the Main object else ignore it.
+    #     if str(type(self.parent)) == "<class '__main__.Main'>":
+    #         return True if Login.logged_in == True else False
     
     def _login(self, staff_id):
         """Internal function. """       
@@ -188,27 +185,24 @@ class Login(object):
             record = database.get_table_records_of_key("staff", "account_number", staff_id, True)
             record = record.to_dict('records')[0]
             
-            # If found, create an instance of the staff id user
+            # If staff_id found, create an instance of the staff id user
             staff = Staff()
             self.staff_role = record['branch_role']
             staff.staff_id = record['account_number']
             staff.staff_name = "%s %s" % (record['staff_first_name'], record['staff_last_name'])
             
+            # If no errors and presuming credentials are accepted then login.
             print(f"Welcome, {staff.staff_name}! You've logged in at: {datetime.datetime.utcnow()}.")
+            return True
         except IndexError:
             messagebox.showerror("Invalid Credentials Error!", InvalidCredentialsError())
             return False
         
-        # If no errors and presuming credentials are accepted. Login.
-        self.__logged_in = True
-        return self.__logged_in
-        
     def login_user(self, staff_id):
         """Logs the user into the system if credentials are correct. """
-        self._login(staff_id)
-        if self.is_logged_in():
-            print(self.is_logged_in())
+        if self._login(staff_id):
             self.main_frame.destroy()
+            return True
         
     def logout_user(self, staff_id):
         """Logs the user out of the system. """

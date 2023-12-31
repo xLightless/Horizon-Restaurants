@@ -5,6 +5,7 @@ from client.interface.toolkits import headings
 from typing import Optional
 from functools import partial
 from server.sql.database import Database
+from tkinter import messagebox
 
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -82,6 +83,9 @@ class Main(object):
         
     def display_navbar(self, staff_role):
         OFFSET_LOGOUT_BTN = -1
+        
+        # Destroy any previously existing navigation bars
+        self.destroy_window_children(self.frame_banner_1.winfo_children())
         
         self.lbl_title.label.grid(row=0, column=0, columnspan=2, rowspan=1,sticky=tk.W)
         self.lbl_branch_id.label.grid(row=1, column=0, columnspan=2, rowspan=1,sticky=tk.W)
@@ -169,20 +173,18 @@ class Application(object):
         self.login_interface = login.Login(self.main_window)
         self.home_interface = home.Home(self.main_window)
         
-        # self.display_login_page()
+        self.display_login_page()
         
     def display_login_page(self):        
         # Display and enable the login buttons
         login_buttons = self.login_interface.get_login_buttons()
+        self.login_interface.enable_login_buttons(login_buttons=login_buttons)
         buttons = self.login_interface.main_frame.winfo_children()[2].winfo_children()
         login_button = len(buttons)-3
         
         # buttons[login_button].bind("<Button>", func=lambda _: )
-        
-        self.login_interface.enable_login_buttons(login_buttons=login_buttons)
-        buttons[login_button].bind("<Button>", func=lambda _: self.main_window.display_navbar(self.login_interface.staff_role) if self.login_interface.is_logged_in() else self.display_login_page())
-        
-        
+        # self.main_window.display_navbar(self.login_interface.staff_role)
+        # buttons[login_button].bind("<Button>", func=lambda _: print(self.login_interface.logged_in))
         
         
     # def display_login_page(self):
