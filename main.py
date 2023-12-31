@@ -20,6 +20,7 @@ app_settings = {
 }
 
 class Main(object):
+    navbar_buttons = dict
     def __init__(self, parent):
         self.style = ttk.Style()
         self.stringVar = tk.StringVar()
@@ -55,10 +56,8 @@ class Main(object):
         # Frame banner content
         self.lbl_title = headings.Heading6(self.frame_banner_1, text="Horizon Restaurants")
         self.lbl_title.label.grid(row=0, column=0, sticky=tk.W)
-        
         self.lbl_branch_id = headings.TextLabel(self.frame_banner_1, text="Branch ID: 123677")
         self.lbl_branch_id.label.grid(row=1, column=0, sticky=tk.W)
-
 
         # Configure columns and rows to expand horizontally and vertically
         parent.grid_columnconfigure(0, weight=1)
@@ -78,21 +77,31 @@ class Main(object):
         self.style.configure("frame_content_2.TFrame", background=FRAME_CONTENT_2_BG_COLOR)
         self.style.configure("frame_content_3.TFrame", background=FRAME_CONTENT_3_BG_COLOR)
         
-        # print(self.frame_banner_1.winfo_children())
+    def _update_main(self):
+        """ Internal function to 'factory reset' the main configuration. Excludes padding size."""
+        width = 0
         
+        # Accumulate the total width of content frames (does not include banner/navbar).
+        for widget in self.containers:
+            width += widget.winfo_width()
+            
+        for widget in range(len(self.containers)):
+            self.containers[widget].configure(width=(width // len(self.containers)))
         
-    def display_navbar(self, staff_role):
+    def display_navbar(self, staff_role, display:bool = False):
         OFFSET_LOGOUT_BTN = -1
-        
         # Destroy any previously existing navigation bars
-        self.destroy_window_children(self.frame_banner_1.winfo_children())
+        if display==True:
+            self.destroy_window_children(self.frame_banner_1.winfo_children())
         
         self.lbl_title.label.grid(row=0, column=0, columnspan=2, rowspan=1,sticky=tk.W)
         self.lbl_branch_id.label.grid(row=1, column=0, columnspan=2, rowspan=1,sticky=tk.W)
         
         # # Create a child frame inside the banner, give it a grid row/col then update.
         btn_frame = tk.Frame(self.frame_banner_1, background=BACKGROUND_COLOR)
-        btn_frame.grid(row=0, column=2, rowspan=2, columnspan=2, sticky=tk.NSEW, padx=16, pady=16)
+        
+        if display==True:
+            btn_frame.grid(row=0, column=2, rowspan=2, columnspan=2, sticky=tk.NSEW, padx=16, pady=16)
         
         # Create a button and place it on the child frame.
         buttons = []
@@ -101,7 +110,6 @@ class Main(object):
         if staff_role >= 5:
             buttons = ["Reports", "Inventory", "Events"]
             
-        
         # Insert a prefix button Home and a suffix button logout.
         buttons.insert(0, "Home")
         buttons.insert(len(buttons), "Logout")
@@ -115,18 +123,12 @@ class Main(object):
         # Navigation Bar buttons
         for i in range(len(buttons)):
             btn = tk.Button(btn_frame, text=buttons[i], width=100 // len(buttons))
-            btn.grid(row=0, column=i, sticky=tk.NE, padx=3)
+            if display==True:
+                btn.grid(row=0, column=i, sticky=tk.NE, padx=3)
             btn_dict[buttons[i]] = btn
             
-        # Logout button. Make it obvious.
-        # btn_dict['Logout'].configure(background='#d9534f', command=lambda: exit())
-        
-            
-        # Seperately destroy children containers rather than main_window.containers to prevent it removing top level sub frames.
-        # Using this function will destory any elements that were previously binded to these container frames.
-        # self.destroy_window_children(self.containers[0]),
-        # self.destroy_window_children(self.containers[1]),
-        # self.destroy_window_children(self.containers[2]),
+            if buttons[i] == "Logout":
+                btn_dict[buttons[i]].configure(background="#dc3545",command=lambda: login.Login(self).logout_user())
         return btn_dict
         
     def destroy_window_children(self, window:list | tk.Frame | ttk.Frame):
@@ -168,57 +170,22 @@ class Application(object):
         main_frame = ttk.Frame(self.main.master, style='main_frame.TFrame', width=self.main.master.winfo_reqwidth(), height=self.main.master.winfo_reqheight())
         main_frame.grid(row=0, column=0, sticky=tk.NSEW)        
         
-        # Initialise any windows/interfaces below
+        # Construct any windows/interfaces below
         self.main_window = Main(main_frame)
         self.login_interface = login.Login(self.main_window)
+        self.login_interface.display()
+        
+        
         self.home_interface = home.Home(self.main_window)
         
-        self.display_login_page()
-        
-    def display_login_page(self):        
-        # Display and enable the login buttons
-        login_buttons = self.login_interface.get_login_buttons()
-        self.login_interface.enable_login_buttons(login_buttons=login_buttons)
-        buttons = self.login_interface.main_frame.winfo_children()[2].winfo_children()
-        login_button = len(buttons)-3
-        
-        # buttons[login_button].bind("<Button>", func=lambda _: )
-        # self.main_window.display_navbar(self.login_interface.staff_role)
-        # buttons[login_button].bind("<Button>", func=lambda _: print(self.login_interface.logged_in))
-        
-        
-    # def display_login_page(self):
-    #     login_session = False
-    #     self.login_interface.display()
-        
-    #     # Login (Not logged in to system)
-    #     buttons = self.login_interface.main_frame.winfo_children()[2].winfo_children()
-    #     login_button = len(buttons)-3
-    #     backspace_button = len(buttons)-1
-                        
-    #     # Login number keys
-    #     for row in range(len(self.login_interface.main_frame.winfo_children())):
-    #         for col in range(len(self.login_interface.main_frame.winfo_children()[row].winfo_children())):
-    #             btn = self.login_interface.main_frame.winfo_children()[row].winfo_children()[col]
-    #             if '!button' in btn.winfo_name():
-    #                 if (btn.cget("text") != "Login") and (btn.cget("text") != "<<"):
-    #                     btn.configure(command=lambda x=str(btn.cget("text")): self.main_window.on_tbx_insert(self.login_interface.input_box.input_box, x))
-                        
-    #     # navbar_buttons = self.main_window.display_navbar()
-
-    #     # Login commands
-    #     # buttons[login_button].configure(command=lambda: print(self.login_interface.login(self.login_interface.input_box.input_box.get())))
-    #     buttons[login_button].configure(
-    #         command = lambda: self.login_interface.login(self.login_interface.input_box.input_box.get()) 
-    #     )
-        
-    #     buttons[login_button].bind("<Button>", lambda event,: print("asdasd"))
-    #     buttons[backspace_button].configure(command=lambda: self.main_window.on_tbx_delete(self.login_interface.input_box.input_box))
-    
-    
-    
-    
+        # Display the login page whenever the application is initialised
+        # login_buttons = self.login_interface.get_login_buttons()
+        # self.login_interface.enable_login_buttons(login_buttons=login_buttons)
+        # self.login_interface.display()
+        # print(self.main_window.navbar_buttons)
+        # navbar_buttons = self.main_window.display_navbar(self.login_interface.staff_role, False)
     # Menu
+    
     
     # Orders
         

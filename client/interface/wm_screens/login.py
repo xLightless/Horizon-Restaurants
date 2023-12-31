@@ -42,23 +42,15 @@ class Staff(object):
     def accept_order(self):
         return
     
+    def set_staff_role(self):
+        return
+    
     def _logout(self):
         return True if len(self.staff_id)==6 else False
     
     def __get_customer(self, customer_id:int):
         """Potentially a redundant function due to the impracticalness of customer in UML. """
         return
-    
-    def _logout_to_wm_screen(self, screen):
-        """ Logs out the Staff member if already logged in."""
-        
-        result = self._logout()
-        if result == True:
-            for widget in screen.master.winfo_children():
-                # widget.destroy()
-                print(widget)
-                
-            return screen
 
     def get_checked_inventory(self, inventory: Inventory) -> dict:
         return
@@ -66,14 +58,17 @@ class Staff(object):
     def request_login_information(self) -> tuple:
         return (self.staff_id, self.staff_name)
 
-class Login(object):
-    logged_in = False   
+class Login(object):  
     def __init__(self, parent):
         self.parent = parent
-        self.staff_role = 6
+        self.staff_role = 0
+        
+    def display(self):
+        login_buttons = self.get_login_buttons()
+        self.enable_login_buttons(login_buttons)
             
-    def get_login_buttons(self):
-        """Display the Login Interface. """
+    def get_login_buttons(self) -> dict:
+        """Get a dictionary of the login interface staff id buttons. """
         
         button_dict = {}
         
@@ -85,8 +80,6 @@ class Login(object):
             self.buttons=[
                 [1, 2, 3], [4, 5, 6], [7, 8, 9], ["Login", 0, "<<"]
             ]
-            
-            # self.parent.style.configure("frame_content_1.TFrame")
             
             main_frame = tk.Frame(self.parent.frame_content_2)
             main_frame.grid(sticky=tk.NSEW)
@@ -121,7 +114,7 @@ class Login(object):
             input_frame.configure(background='#191919')
 
             # Read only input box
-            input_box = inputs.InputBox(input_frame, label_text="Staff ID: ")
+            input_box = inputs.InputBox(input_frame, label_text="Staff ID: ", state='readonly')
             input_box.get_frame().grid(row=0, column=0, columnspan=2, rowspan=2)
             input_box.get_frame().configure(background='#191919')
             input_box.input_box_label.configure(background='#191919', fg='#FFFFFF')
@@ -161,16 +154,15 @@ class Login(object):
                     login_buttons[self.buttons[row][col]].configure(command=lambda: self.input_box.on_tbx_delete(self.input_box.input_box))
                 elif self.buttons[row][col] == "Login":
                     login_buttons[self.buttons[row][col]].bind(
-                        "<Button>", func=lambda _: (self.parent.display_navbar(self.staff_role) if self.login_user(self.input_box.input_box.get()) == True else "")
+                        "<Button>", func=lambda _: (self.parent.display_navbar(self.staff_role, True) if self.login_user(self.input_box.input_box.get()) == True else "")
                     )
                 else:
                     login_buttons[self.buttons[row][col]].configure(command=lambda x=str(login_buttons[self.buttons[row][col]].cget("text")): self.input_box.on_tbx_insert(self.input_box.input_box, x))
-
-    # def is_logged_in(self):
-    #     # Check that the parent is only from the Main object else ignore it.
-    #     if str(type(self.parent)) == "<class '__main__.Main'>":
-    #         return True if Login.logged_in == True else False
-    
+                
+    def is_logged_in(self):
+        print("staff role: ", self.staff_role)
+        return True if self.staff_role else False
+                    
     def _login(self, staff_id):
         """Internal function. """       
         try:
@@ -200,13 +192,18 @@ class Login(object):
         
     def login_user(self, staff_id):
         """Logs the user into the system if credentials are correct. """
+        
         if self._login(staff_id):
+            # Destroy the login frame if user is found.
+            # self.parent.destroy_window_children(self.parent.frame_content_2.winfo_children())
             self.main_frame.destroy()
+            self.parent._update_main()
             return True
         
-    def logout_user(self, staff_id):
+    def logout_user(self):
         """Logs the user out of the system. """
-        return 
+        print("Logging out of the system...")
+        exit()
 
 class Chef(Staff):
     def __init__(self):
