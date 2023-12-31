@@ -37,7 +37,10 @@ class BaseFont(object):
         }
         
 class Characters(BaseFont):
-    """Base class for Tkinter Characters modification."""
+    """
+    Base class for Tkinter Characters modification.
+    Its purpose is to improve the user experience of an application by using a preset base design.
+    """
     
     def __init__(self, family="Arial", propagate=False):
         super().__init__(family)

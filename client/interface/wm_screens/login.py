@@ -14,6 +14,7 @@ from client.interface.wm_screens.inventory import Inventory
 from client.settings import INITIAL_HEIGHT, INITIAL_WIDTH, NAVBAR_HEIGHT, BACKGROUND_COLOR, MAIN_GRID_BOXES
 from client.errors import InvalidCredentialsError
 from server.sql.database import database
+from tkinter import messagebox
 
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -72,8 +73,10 @@ class Login(object):
         self.parent = parent
         self.staff_role = 6
             
-    def display(self):
+    def get_login_buttons(self):
         """Display the Login Interface. """
+        
+        button_dict = {}
         
         # Check if the parent is of the main interface.
         if str(type(self.parent)) == "<class '__main__.Main'>":
@@ -131,8 +134,7 @@ class Login(object):
             content_frame.grid(row=2, column=0, sticky=tk.NSEW)
             content_frame.configure(background='#191919', padx=32, pady=32)
             
-            # Number pad
-            # number_pad = [ttk.Button(content_frame, style=f"{row}_{col}.TButton") for row in range(len(self.buttons)) for col in range(len(self.buttons[row]))]
+            # Staff Login Numberpad buttons
             for row in range(len(self.buttons)):
                 for col in range(len(self.buttons[row])):
                     
@@ -142,12 +144,29 @@ class Login(object):
                     
                     # Create a button for each grid position
                     btn = ttk.Button(content_frame, style=f"{row}_{col}.TButton", text=self.buttons[row][col], command=None)
-                    btn.grid(row=row, column=col, sticky=tk.NSEW)
                     self.parent.style.configure(f"{row}_{col}.TButton", background=BACKGROUND_COLOR)
-                    
-                    # btn_dict[self.buttons[row][col]] = btn
-                    
+                    button_dict[self.buttons[row][col]] = btn
+
             self.parent.style.configure("title_frame.TFrame", background=BACKGROUND_COLOR)
+            return button_dict
+                            
+    def enable_login_buttons(self, login_buttons):
+        """Enable the login interface staff id buttons. """
+        
+        for row in range(len(self.buttons)):
+            for col in range(len(self.buttons[row])):
+                login_buttons[self.buttons[row][col]].grid(row=row, column=col, sticky=tk.NSEW)
+
+                # Configure the buttons command callbacks.
+                if self.buttons[row][col] == "<<":
+                    login_buttons[self.buttons[row][col]].configure(command=lambda: self.input_box.on_tbx_delete(self.input_box.input_box))
+                elif self.buttons[row][col] == "Login":
+                    login_buttons[self.buttons[row][col]].bind(
+                        "<Button>", func=lambda _: self.login_user(self.input_box.input_box.get())
+                    )
+                else:
+                    login_buttons[self.buttons[row][col]].configure(command=lambda x=str(login_buttons[self.buttons[row][col]].cget("text")): self.input_box.on_tbx_insert(self.input_box.input_box, x))
+                            
 
     def is_logged_in(self):
         # Check that the parent is only from the Main object else ignore it.
@@ -155,11 +174,14 @@ class Login(object):
             return True if self.__logged_in else False
         return InvalidCredentialsError()
     
-    def login(self, staff_id):        
+    def _login(self, staff_id):
+        """Internal function. """       
         try:
+            # Raise value error if parsed staff id is not an integer
             int(staff_id)
         except ValueError:
-            return print(InvalidCredentialsError())
+            messagebox.showerror("Invalid Credentials Error!", InvalidCredentialsError())
+            return False
         
         # Get information about the user
         try:
@@ -170,34 +192,27 @@ class Login(object):
             staff = Staff()
             self.staff_role = record['branch_role']
             staff.staff_id = record['account_number']
-            staff.staff_name = f"{record['staff_first_name']}{record['staff_last_name']}"
+            staff.staff_name = "%s %s" % (record['staff_first_name'], record['staff_last_name'])
             
             print(f"Welcome, {staff.staff_name}! You've logged in at: {datetime.datetime.utcnow()}.")
         except IndexError:
-            return print(InvalidCredentialsError())
+            messagebox.showerror("Invalid Credentials Error!", InvalidCredentialsError())
+            return False
         
         # If no errors and presuming credentials are accepted. Login.
-        # Also, destroy any login interface children.
-        # self.parent.display_navbar(self.staff_role)
-        # self.__class__.__logged_in = True
-        # self.parent.destroy_window_children(self.parent.containers[1])
-        # self.parent.display_navbar(self.staff_role)
-        # # self.parent.__init__(self.parent.)
-        # # return self.is_logged_in()
+        self.__logged_in = True
+        return self.__logged_in
         
-    
-    def on_tbx_insert(self, tbx_input, args):
-        tbx_input.configure(state="normal")
-        tbx_input.insert(tk.END, args)
-        tbx_input.configure(state="readonly")
+    def login_user(self, staff_id):
+        """Logs the user into the system if credentials are correct. """
+        self._login(staff_id)
+        if self.is_logged_in():
+            print(self.is_logged_in())
+            self.main_frame.destroy()
         
-    def on_tbx_delete(self, tbx_input):
-        tbx_input.configure(state="normal")
-        tbx_input.delete(0, tk.END)
-        tbx_input.configure(state="readonly")
-        
-    def get_tbx_length(self, tbx_input):
-        return len(tbx_input.get())
+    def logout_user(self, staff_id):
+        """Logs the user out of the system. """
+        return 
 
 class Chef(Staff):
     def __init__(self):

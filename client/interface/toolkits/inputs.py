@@ -70,6 +70,19 @@ class InputBox(Characters):
         if state == DISABLED:
             return self.input_box.config(state=state, disabledbackground="#dddddd") 
         return self.input_box.config(state=NORMAL)
+    
+    def on_tbx_insert(self, tbx_input, args):
+        tbx_input.configure(state="normal")
+        tbx_input.insert(END, args)
+        tbx_input.configure(state="readonly")
+        
+    def on_tbx_delete(self, tbx_input):
+        tbx_input.configure(state="normal")
+        tbx_input.delete(0, END)
+        tbx_input.configure(state="readonly")
+        
+    def get_tbx_length(self, tbx_input):
+        return len(tbx_input.get())
 
         
 
