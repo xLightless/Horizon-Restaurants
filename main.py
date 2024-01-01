@@ -1,5 +1,5 @@
 from client.interface import Interface
-from client.interface.wm_screens import home, login
+from client.interface.wm_screens import login, menu, admin, events, orders, payments, reports, reservations
 from client.settings import *
 from client.interface.toolkits import headings
 from typing import Optional
@@ -24,6 +24,11 @@ class Main(object):
     def __init__(self, parent):
         self.style = ttk.Style()
         self.stringVar = tk.StringVar()
+        
+        # self.login_interface = login.Login(parent)
+        # self.home_interface = home.Home(parent)
+        
+        self.btn_dict = {}
 
         # Banner frame and widgets
         self.frame_banner_1 = ttk.Frame(parent, style="bannerFrame.TFrame")
@@ -87,6 +92,11 @@ class Main(object):
             
         for widget in range(len(self.containers)):
             self.containers[widget].configure(width=(width // len(self.containers)))
+    
+    def get_navbar_buttons(self, staff_role):
+        navbar = self.display_navbar(staff_role, False)
+        return navbar
+        
         
     def display_navbar(self, staff_role, display:bool = False):
         OFFSET_LOGOUT_BTN = -1
@@ -118,7 +128,7 @@ class Main(object):
         btn_frame.grid_rowconfigure(0, weight=1)
         btn_frame.grid_rowconfigure(2, weight=1)
         btn_frame.grid_columnconfigure(0, weight=1)
-        btn_frame.grid_columnconfigure(len(buttons)+OFFSET_LOGOUT_BTN, weight=1)
+        # btn_frame.grid_columnconfigure(len(buttons)+OFFSET_LOGOUT_BTN, weight=1)
             
         # Navigation Bar buttons
         for i in range(len(buttons)):
@@ -128,7 +138,7 @@ class Main(object):
             btn_dict[buttons[i]] = btn
             
             if buttons[i] == "Logout":
-                btn_dict[buttons[i]].configure(background="#dc3545",command=lambda: login.Login(self).logout_user())
+                btn_dict[buttons[i]].configure(background="#dc3545", command=lambda: (self.destroy_window_children(self.containers), login.Login(self).display())) # login.Login(self).logout_user()
         return btn_dict
         
     def destroy_window_children(self, window:list | tk.Frame | ttk.Frame):
@@ -173,27 +183,34 @@ class Application(object):
         # Construct any windows/interfaces below
         self.main_window = Main(main_frame)
         self.login_interface = login.Login(self.main_window)
+        self.menu_interface = menu.Menu(self.main_window)
+        self.orders_interface = orders.Order(self.main_window)
+        self.payment_interface = payments.Payment(self.main_window)
+        
+        # Home/Main
+        
+        # Login buttons
         self.login_interface.display()
+        self.login_interface.btn_dict.get("Login").bind(
+            "<Button>", func=lambda _: (
+            (self.menu_interface.display(), self.orders_interface.display(), self.payment_interface.display(), self.main_window.display_navbar(self.login_interface.staff_role, True)) if self.login_interface.login_user(self.login_interface.input_box.input_box.get()) == True else ""
+            )
+        )
         
+        # Menu buttons
+        # self.menu_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
         
-        self.home_interface = home.Home(self.main_window)
-        
-        # Display the login page whenever the application is initialised
-        # login_buttons = self.login_interface.get_login_buttons()
-        # self.login_interface.enable_login_buttons(login_buttons=login_buttons)
-        # self.login_interface.display()
-        # print(self.main_window.navbar_buttons)
-        # navbar_buttons = self.main_window.display_navbar(self.login_interface.staff_role, False)
-    # Menu
-    
-    
-    # Orders
-        
-    # Payments
-        
-    # Kitchen/Inventory
-        
-    # Reports
+        # Orders buttons
+        # self.orders_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
+            
+        # Payments buttons
+        # self.payments_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
+            
+        # Kitchen/Inventory buttons
+        # self.kitchen_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
+            
+        # Reports buttons
+        # self.reports_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
 
 if __name__ == '__main__':
     

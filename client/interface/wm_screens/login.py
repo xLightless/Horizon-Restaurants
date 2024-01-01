@@ -6,8 +6,6 @@
 # 
 # --------------------------------------------------------------------------------------- #
 
-from client.interface import Interface
-from client.interface.authentication import AuthenticateUser
 from client.interface.toolkits.typography.font import *
 from client.interface.toolkits import inputs, headings
 from client.interface.wm_screens.inventory import Inventory
@@ -18,9 +16,7 @@ from tkinter import messagebox
 
 import tkinter as tk
 import tkinter.ttk as ttk
-import sys
 import datetime
-import pandas as pd
 
 
 # Login Interface options
@@ -63,6 +59,14 @@ class Login(object):
         self.parent = parent
         self.staff_role = 0
         
+        if str(type(self.parent)) == "<class '__main__.Main'>":
+            self.main_frame = tk.Frame(self.parent.frame_content_2)
+            self.banner:ttk.Frame = self.parent.frame_banner_1
+            self.parent.style.configure("self.main_frame.TFrame", background=BACKGROUND_COLOR, bd=1, relief=tk.SOLID)
+            self.parent.style.configure("title_frame.TFrame", background=BACKGROUND_COLOR)
+            
+            self.btn_dict = {}
+            
     def display(self):
         login_buttons = self.get_login_buttons()
         self.enable_login_buttons(login_buttons)
@@ -74,24 +78,18 @@ class Login(object):
         
         # Check if the parent is of the main interface.
         if str(type(self.parent)) == "<class '__main__.Main'>":
-            self.parent.style.configure("main_frame.TFrame", background=BACKGROUND_COLOR, bd=1, relief=tk.SOLID)
-            self.banner:ttk.Frame = self.parent.frame_banner_1
-            container_titles = ["", "Login with Staff ID", ""]
             self.buttons=[
                 [1, 2, 3], [4, 5, 6], [7, 8, 9], ["Login", 0, "<<"]
             ]
             
-            main_frame = tk.Frame(self.parent.frame_content_2)
-            main_frame.grid(sticky=tk.NSEW)
-            main_frame.grid_rowconfigure(0, weight=0)
-            main_frame.grid_rowconfigure(1, weight=1)
-            main_frame.grid_rowconfigure(2, weight=1)
-            main_frame.grid_columnconfigure(0, weight=1)
-            
-            self.main_frame = main_frame
+            self.main_frame.grid(sticky=tk.NSEW)
+            self.main_frame.grid_rowconfigure(0, weight=0)
+            self.main_frame.grid_rowconfigure(1, weight=1)
+            self.main_frame.grid_rowconfigure(2, weight=1)
+            self.main_frame.grid_columnconfigure(0, weight=1)
             
             # Title frame for login        
-            title_frame = ttk.Frame(main_frame, style="title_frame.TFrame", border=3, relief=tk.SOLID)
+            title_frame = ttk.Frame(self.main_frame, style="title_frame.TFrame", border=3, relief=tk.SOLID)
             title_frame.grid(row=0, column=0, sticky=tk.NSEW)
             title_frame.grid_columnconfigure(0, weight=1)
             title_frame.grid_columnconfigure(1, weight=1)
@@ -103,12 +101,10 @@ class Login(object):
             title.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
             
             # Error frame for login
-            input_frame = tk.Frame(main_frame) # style="input_frame.TFrame"
+            input_frame = tk.Frame(self.main_frame) # style="input_frame.TFrame"
             input_frame.grid(row=1, column=0, sticky=tk.NSEW)
             input_frame.grid_rowconfigure(0, weight=1)
             input_frame.grid_rowconfigure(1, weight=1)
-            # input_frame.grid_rowconfigure(2, weight=1)
-            
             input_frame.grid_columnconfigure(0, weight=1)
             input_frame.grid_columnconfigure(1, weight=1)
             input_frame.configure(background='#191919')
@@ -122,7 +118,7 @@ class Login(object):
             self.input_box = input_box
             
             # Content frame for login
-            content_frame = tk.Frame(main_frame) # style="content_frame.TFrame"
+            content_frame = tk.Frame(self.main_frame) # style="content_frame.TFrame"
             content_frame.grid(row=2, column=0, sticky=tk.NSEW)
             content_frame.configure(background='#191919', padx=32, pady=32)
             
@@ -150,14 +146,17 @@ class Login(object):
                 login_buttons[self.buttons[row][col]].grid(row=row, column=col, sticky=tk.NSEW)
 
                 # Configure the buttons command callbacks.
-                if self.buttons[row][col] == "<<":
-                    login_buttons[self.buttons[row][col]].configure(command=lambda: self.input_box.on_tbx_delete(self.input_box.input_box))
-                elif self.buttons[row][col] == "Login":
-                    login_buttons[self.buttons[row][col]].bind(
-                        "<Button>", func=lambda _: (self.parent.display_navbar(self.staff_role, True) if self.login_user(self.input_box.input_box.get()) == True else "")
-                    )
-                else:
-                    login_buttons[self.buttons[row][col]].configure(command=lambda x=str(login_buttons[self.buttons[row][col]].cget("text")): self.input_box.on_tbx_insert(self.input_box.input_box, x))
+                if self.buttons[row][col] != "Login":
+                    if self.buttons[row][col] == "<<":
+                        login_buttons[self.buttons[row][col]].configure(command=lambda: self.input_box.on_tbx_delete(self.input_box.input_box))
+                    # elif self.buttons[row][col] == "Login":
+                    #     login_buttons[self.buttons[row][col]].bind(
+                    #         "<Button>", func=lambda _: (self.parent.display_navbar(self.staff_role, True) if self.login_user(self.input_box.input_box.get()) == True else "")
+                    #     )
+                    else:
+                        login_buttons[self.buttons[row][col]].configure(command=lambda x=str(login_buttons[self.buttons[row][col]].cget("text")): self.input_box.on_tbx_insert(self.input_box.input_box, x))
+                
+                self.btn_dict[self.buttons[row][col]] = login_buttons[self.buttons[row][col]]
                 
     def is_logged_in(self):
         print("staff role: ", self.staff_role)
@@ -206,6 +205,7 @@ class Login(object):
         exit()
 
 class Chef(Staff):
+    
     def __init__(self):
         self._chef_id = self.staff_id
         self._chef_name = self.staff_name

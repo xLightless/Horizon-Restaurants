@@ -7,13 +7,41 @@
 # --------------------------------------------------------------------------------------- #
 
 from client.interface.wm_screens.inventory import Inventory
+from client.interface.toolkits import headings
+from client.settings import BACKGROUND_COLOR
 import tkinter.ttk as ttk
+import tkinter as tk
 
 class Menu(object):
     def __init__(self, parent):
         """ Construct a tkinter frame for Menu. """
         self._inventory = Inventory()
         self.parent = parent
+        
+        self.main_frame = tk.Frame(self.parent.frame_content_1)
+        self.btn_dict = {}
+        
+    def display(self):
+        self.main_frame.grid(sticky=tk.NSEW)
+        self.main_frame.grid_rowconfigure(0, weight=0)
+        self.main_frame.grid_rowconfigure(1, weight=1)
+        self.main_frame.grid_rowconfigure(2, weight=1)
+        self.main_frame.grid_columnconfigure(0, weight=1)
+        
+        # Title frame for menu        
+        title_frame = ttk.Frame(self.main_frame, style="title_frame.TFrame", border=3, relief=tk.SOLID)
+        title_frame.grid(row=0, column=0, sticky=tk.NSEW)
+        title_frame.grid_columnconfigure(0, weight=1)
+        title_frame.grid_columnconfigure(1, weight=1)
+        title_frame.grid_columnconfigure(2, weight=1)
+        
+        # Title
+        title = headings.Heading6(title_frame, text="MENU")
+        title.label.grid(row=0, column=1, sticky=tk.NSEW)
+        title.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
+        
+    def hide(self):
+        self.main_frame.forget()
     
     def get_menu(self):
         """ Gets the menu and returns all items. """
