@@ -9,6 +9,7 @@
 from client.interface.wm_screens.inventory import Inventory
 from client.interface.toolkits import headings
 from client.settings import BACKGROUND_COLOR
+from tkinter import simpledialog
 import tkinter.ttk as ttk
 import tkinter as tk
 
@@ -17,28 +18,86 @@ class Menu(object):
         """ Construct a tkinter frame for Menu. """
         self._inventory = Inventory()
         self.parent = parent
+        self.style = ttk.Style()
+        self.configure_style()
         
-        self.main_frame = tk.Frame(self.parent.frame_content_1)
+        self.main_frame = ttk.Frame(self.parent.frame_content_1)
+
+    def configure_style(self):
+
+        frame_width = self.parent.frame_content_1.winfo_reqwidth()
+
+        #self.style.configure("Binayam.TLabel", foreground="black", background = "black", font=("Helvetica", 12))
+        #button = ttk.Button(root, text="Binayam", style="Binayam.TButton")
+        self.style.configure("Binayam.TLabel", foreground="blue", background="black", font=("Helvetica", 12, "italic"), borderwidth=frame_width, relief="solid", bordercolor="red")
+
         self.btn_dict = {}
         
     def display(self):
-        self.main_frame.grid(sticky=tk.NSEW)
-        self.main_frame.grid_rowconfigure(0, weight=0)
-        self.main_frame.grid_rowconfigure(1, weight=1)
-        self.main_frame.grid_rowconfigure(2, weight=1)
-        self.main_frame.grid_columnconfigure(0, weight=1)
-        
-        # Title frame for menu        
-        title_frame = ttk.Frame(self.main_frame, style="title_frame.TFrame", border=3, relief=tk.SOLID)
-        title_frame.grid(row=0, column=0, sticky=tk.NSEW)
-        title_frame.grid_columnconfigure(0, weight=1)
-        title_frame.grid_columnconfigure(1, weight=1)
-        title_frame.grid_columnconfigure(2, weight=1)
-        
-        # Title
-        title = headings.Heading6(title_frame, text="MENU")
-        title.label.grid(row=0, column=1, sticky=tk.NSEW)
-        title.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
+        if str(type(self.parent)) == "<class '__main__.Main'>":
+            self.parent.style.configure("self.main_frame.TFrame", background=BACKGROUND_COLOR, bd=1, relief=tk.SOLID)
+
+            self.main_frame = ttk.Frame(self.parent.frame_content_1)
+            self.main_frame.grid(row=0, column=0, sticky=tk.NSEW)
+            self.main_frame.grid_rowconfigure(0, weight=1)
+            self.main_frame.grid_rowconfigure(1, weight=1)
+            self.main_frame.grid_rowconfigure(2, weight=1)
+            self.main_frame.grid_columnconfigure(0, weight=1)
+
+            menu_title_frame = ttk.Frame(self.main_frame)
+            menu_title_frame.grid(row=0, column=0)
+            menu_title_frame.grid_rowconfigure(0, weight=1)
+            menu_title_frame.grid_rowconfigure(1, weight=1)
+            menu_title_frame.grid_rowconfigure(2, weight=2)
+
+            menu_search_frame = ttk.Frame(self.main_frame)
+            menu_search_frame.grid(row=1, column=0)
+
+            menu_tree_frame = ttk.Frame(self.main_frame)
+            menu_tree_frame.grid(row=2, column=0)
+
+            search_label = ttk.Label(menu_search_frame, text="Search", style = "Binayam.TLabel")
+            search_label.grid(row=0, column=0, padx=10, pady=10)
+            search_label.bind("<Button>", self._query_menu_items)
+
+            # menu_label = ttk.Label(menu_title_frame, text="Menu", background="black", foreground="white",font=("Helvetica", int(self.main_frame.winfo_reqheight() * 0.1), "bold"))
+            # menu_label.grid(row=0, column=0, columnspan=3, sticky=tk.NSEW)
+            # menu_label.configure(anchor="center")
+
+            menu_label = headings.Heading6(menu_title_frame, text="Menu")
+            menu_label.label.configure(bg="#1e1e1e", fg='white') # Add dark theme
+            # menu_label.label.pack(side="top", fill="both", expand=True)
+            menu_label.label.grid(row=0, column=0, sticky=tk.NSEW)
+
+            # binayam_label= ttk.Label(menu_tree_frame, text="Binayam")
+            # binayam_label.grid(row=0, column = 0)
+
+            menu_tree = ttk.Treeview(menu_tree_frame, columns=("Items","Description"), show="headings")
+            menu_tree.grid(row=0, column=0, sticky="NSEW")
+            
+            for i in range(len(menu_tree["columns"])):
+                menu_tree.column(menu_tree["columns"][i], width=(100))
+            
+            menu_tree.heading("Items", text="Items")
+            menu_tree.heading("Description", text = "Description")
+
+            for i in range(1, 26):
+                item = f"Item {i}"
+                description = f"Description {i}"
+                menu_tree.insert("", "end", values=(item,))
+
+            scrollbar = ttk.Scrollbar(menu_tree_frame, orient="vertical", command=menu_tree.yview)
+            scrollbar.grid(row=0, column=1, sticky="NS")
+
+            menu_tree.configure(yscrollcommand=scrollbar.set)
+
+        return
+    
+    def _query_menu_items(self, event):
+        """Internal function. Search box for menu items. """
+        search_query = simpledialog.askstring("Menu Items", "SEARCH")
+        if search_query is not None:
+            print(f"Menu: {search_query}")
         
     def hide(self):
         self.main_frame.forget()

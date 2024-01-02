@@ -67,9 +67,16 @@ class Login(object):
             
             self.btn_dict = {}
             
-    def display(self):
+    def display(self, pages:list = []):
+        """Display the login interface along with a list of other page elements or pages"""
+        
         login_buttons = self.get_login_buttons()
         self.enable_login_buttons(login_buttons)
+        self.btn_dict.get("Login").bind(
+            "<Button>", func=lambda _: (
+            (self.parent.display_navbar(self.staff_role, True), pages) if self.login_user(self.input_box.input_box.get()) == True else ""
+            )
+        )
             
     def get_login_buttons(self) -> dict:
         """Get a dictionary of the login interface staff id buttons. """
@@ -149,10 +156,6 @@ class Login(object):
                 if self.buttons[row][col] != "Login":
                     if self.buttons[row][col] == "<<":
                         login_buttons[self.buttons[row][col]].configure(command=lambda: self.input_box.on_tbx_delete(self.input_box.input_box))
-                    # elif self.buttons[row][col] == "Login":
-                    #     login_buttons[self.buttons[row][col]].bind(
-                    #         "<Button>", func=lambda _: (self.parent.display_navbar(self.staff_role, True) if self.login_user(self.input_box.input_box.get()) == True else "")
-                    #     )
                     else:
                         login_buttons[self.buttons[row][col]].configure(command=lambda x=str(login_buttons[self.buttons[row][col]].cget("text")): self.input_box.on_tbx_insert(self.input_box.input_box, x))
                 
@@ -196,7 +199,7 @@ class Login(object):
             # Destroy the login frame if user is found.
             # self.parent.destroy_window_children(self.parent.frame_content_2.winfo_children())
             self.main_frame.destroy()
-            self.parent._update_main()
+            # self.parent._update_main()
             return True
         
     def logout_user(self):

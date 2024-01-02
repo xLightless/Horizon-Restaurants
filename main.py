@@ -92,6 +92,8 @@ class Main(object):
             
         for widget in range(len(self.containers)):
             self.containers[widget].configure(width=(width // len(self.containers)))
+            
+        # return (width // len(self.containers))
     
     def get_navbar_buttons(self, staff_role):
         navbar = self.display_navbar(staff_role, False)
@@ -136,6 +138,9 @@ class Main(object):
             if display==True:
                 btn.grid(row=0, column=i, sticky=tk.NE, padx=3)
             btn_dict[buttons[i]] = btn
+            
+            if buttons[i] == "Home":
+                btn_dict[buttons[i]].configure(background="#FFFFFF", command=lambda: (self.destroy_window_children(self.containers), menu.Menu(self).display()))
             
             if buttons[i] == "Logout":
                 btn_dict[buttons[i]].configure(background="#dc3545", command=lambda: (self.destroy_window_children(self.containers), login.Login(self).display())) # login.Login(self).logout_user()
@@ -190,12 +195,7 @@ class Application(object):
         # Home/Main
         
         # Login buttons
-        self.login_interface.display()
-        self.login_interface.btn_dict.get("Login").bind(
-            "<Button>", func=lambda _: (
-            (self.menu_interface.display(), self.orders_interface.display(), self.payment_interface.display(), self.main_window.display_navbar(self.login_interface.staff_role, True)) if self.login_interface.login_user(self.login_interface.input_box.input_box.get()) == True else ""
-            )
-        )
+        self.login_interface.display(pages=[self.login_interface.display()])
         
         # Menu buttons
         # self.menu_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
