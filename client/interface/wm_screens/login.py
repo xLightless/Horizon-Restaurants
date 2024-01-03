@@ -60,95 +60,96 @@ class Login(object):
         self.staff_role = 0
         
         if str(type(self.parent)) == "<class '__main__.Main'>":
-            # self.__subinterface = self.parent.main_frame
-            # self.banner:ttk.Frame = self.parent.frame_banner_1
-            # self.parent.style.configure("main_frame.TFrame", background=BACKGROUND_COLOR, bd=1, relief=tk.SOLID)
-            self.parent.style.configure("title_frame.TFrame", background=BACKGROUND_COLOR)
-            self.btn_dict = {}
+            self.style:ttk.Style = self.parent.style
+            self.style.configure("self.title_frame.TFrame", background=BACKGROUND_COLOR)
             
-    def display(self, pages:list = []):
-        """Display the login interface along with a list of other page elements or pages"""
-        
-        login_buttons = self.get_login_buttons()
-        self.enable_login_buttons(login_buttons)
-        self.btn_dict.get("Login").bind("<Button>", func=lambda _: ((self.login_user(self.input_box.input_box.get()), pages)))
-            
-    def get_login_buttons(self) -> dict:
-        """Get a dictionary of the login interface staff id buttons. """
-        
-        button_dict = {}
-        
-        # Check if the parent is of the main interface.
-        if str(type(self.parent)) == "<class '__main__.Main'>":
+            # Login Buttons for entering STAFF ID
             self.buttons=[
                 [1, 2, 3], [4, 5, 6], [7, 8, 9], ["Login", 0, "<<"]
             ]
+            
+            self.title_frame = ttk.Frame(self.parent.content_frame, style="title_frame.TFrame", border=3, relief=tk.SOLID, name="title_frame")
+            self.input_frame = tk.Frame(self.parent.content_frame, name="input_frame")
+            self.numberpad_frame = tk.Frame(self.parent.content_frame, name="numberpad_frame")
+            self.input_box = inputs.InputBox(self.input_frame, label_text="Staff ID: ", state='readonly')
+          
+    def display_frames(self):
+        """Display the login frame on the top level frame."""
+          
+        # Check if the parent is of the main interface.
+        if str(type(self.parent)) == "<class '__main__.Main'>":
+            
+            button_object_dict = {}
 
             # Title frame for login        
-            title_frame = ttk.Frame(self.parent.content_frame, style="title_frame.TFrame", border=3, relief=tk.SOLID)
-            title_frame.grid(row=0, column=1, sticky=tk.NSEW)
-            title_frame.grid_columnconfigure(0, weight=1)
-            title_frame.grid_columnconfigure(1, weight=1)
-            title_frame.grid_columnconfigure(2, weight=1)
+            self.parent.style.configure("title_frame.TFrame", background=BACKGROUND_COLOR)
+            self.title_frame.grid_columnconfigure(0, weight=1)
+            self.title_frame.grid_columnconfigure(1, weight=1)
+            self.title_frame.grid_columnconfigure(2, weight=1)
             
             # Title
-            title = headings.Heading6(title_frame, text="POS Management System")
-            title.label.grid(row=0, column=1, sticky=tk.NSEW)
+            title = headings.Heading6(self.title_frame, text="POS Management System")
             title.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
             
-            # Error frame for login
-            input_frame = tk.Frame(self.parent.content_frame) # style="input_frame.TFrame"
-            input_frame.grid(row=1, column=1, sticky=tk.NSEW)
-            input_frame.grid_rowconfigure(0, weight=1)
-            input_frame.grid_rowconfigure(1, weight=1)
-            input_frame.grid_columnconfigure(0, weight=1)
-            input_frame.grid_columnconfigure(1, weight=1)
-            input_frame.configure(background='#191919')
+            # STAFF ID Login Frame
+            self.input_frame.grid_rowconfigure(0, weight=1)
+            self.input_frame.grid_rowconfigure(1, weight=1)
+            self.input_frame.grid_columnconfigure(0, weight=1)
+            self.input_frame.grid_columnconfigure(1, weight=1)
+            self.input_frame.configure(background='#191919')
 
-            # Read only input box
-            input_box = inputs.InputBox(input_frame, label_text="Staff ID: ", state='readonly')
-            input_box.get_frame().grid(row=0, column=0, columnspan=2, rowspan=2)
-            input_box.get_frame().configure(background='#191919')
-            input_box.input_box_label.configure(background='#191919', fg='#FFFFFF')
-            
-            self.input_box = input_box
+            # STAFF ID read only input box
+            self.input_box.get_frame().configure(background='#191919')
+            self.input_box.input_box_label.configure(background='#191919', fg='#FFFFFF')
             
             # Login Frame
-            login_frame = tk.Frame(self.parent.content_frame) # style="content_frame.TFrame"
-            login_frame.grid(row=2, column=1, sticky=tk.NSEW)
-            login_frame.configure(background='#191919', padx=32, pady=32)
+            self.numberpad_frame.configure(background='#191919', padx=32, pady=32)
+                    
+            # Get the list of frames to configure/display
+            self.title_frame.grid(row=0, column=1, sticky=tk.NSEW)
+            title.label.grid(row=0, column=1, sticky=tk.NSEW)
+            self.input_frame.grid(row=1, column=1, sticky=tk.NSEW)
+            self.numberpad_frame.grid(row=2, column=1, sticky=tk.NSEW)
+            self.input_box.get_frame().grid(row=0, column=0, columnspan=2, rowspan=2)
             
-            # Staff Login Numberpad buttons
-            for row in range(len(self.buttons)):
-                for col in range(len(self.buttons[row])):
-                    
-                    # Configure the grid to expand each row/col to the correct size throughout.
-                    login_frame.grid_rowconfigure(row, weight=1)
-                    login_frame.grid_columnconfigure(col, weight=1)
-                    
-                    # Create a button for each grid position
-                    btn = ttk.Button(login_frame, style=f"{row}_{col}.TButton", text=self.buttons[row][col], command=None)
-                    self.parent.style.configure(f"{row}_{col}.TButton", background=BACKGROUND_COLOR)
-                    button_dict[self.buttons[row][col]] = btn
-
-            self.parent.style.configure("title_frame.TFrame", background=BACKGROUND_COLOR)
-            return button_dict
-                            
-    def enable_login_buttons(self, login_buttons):
-        """Enable the login interface staff id buttons. """
+    def display_login_buttons(self, login_buttons):
+        for row in range(len(login_buttons)):
+            for col in range(len(login_buttons[row])):
+                login_buttons[row][col].grid(row=row, column=col, sticky=tk.NSEW)
         
+    def create_login_buttons_2d_list(self):
+        """Create a 2D array of button objects"""   
+        # Staff Login Numberpad buttons
         for row in range(len(self.buttons)):
             for col in range(len(self.buttons[row])):
-                login_buttons[self.buttons[row][col]].grid(row=row, column=col, sticky=tk.NSEW)
-
-                # Configure the buttons command callbacks.
-                if self.buttons[row][col] != "Login":
-                    if self.buttons[row][col] == "<<":
-                        login_buttons[self.buttons[row][col]].configure(command=lambda: self.input_box.on_tbx_delete(self.input_box.input_box))
-                    else:
-                        login_buttons[self.buttons[row][col]].configure(command=lambda x=str(login_buttons[self.buttons[row][col]].cget("text")): self.input_box.on_tbx_insert(self.input_box.input_box, x))
                 
-                self.btn_dict[self.buttons[row][col]] = login_buttons[self.buttons[row][col]]
+                # Configure the grid to expand each row/col to the correct size throughout.
+                self.numberpad_frame.grid_rowconfigure(row, weight=1)
+                self.numberpad_frame.grid_columnconfigure(col, weight=1)
+                
+                # Create a button for each grid position
+                btn = ttk.Button(self.numberpad_frame, style=f"login_button_{row}_{col}.TButton", text=self.buttons[row][col], command=None)
+                self.parent.style.configure(f"login_button_{row}_{col}.TButton", background=BACKGROUND_COLOR)
+                
+                # Update self.buttons to match the object
+                self.buttons[row][col] = btn
+                
+                # # Add commands to the buttons to allow the user to sign in with their STAFF ID
+                # if self.buttons[row][col].cget('text') != "Login":
+                #     if self.buttons[row][col].cget('text') == "<<":
+                #         self.buttons[row][col].configure(command=lambda: self.input_box.on_tbx_delete(self.input_box.input_box))
+                #     else:
+                #         self.buttons[row][col].configure(command=lambda x=str(self.buttons[row][col].cget("text")): self.input_box.on_tbx_insert(self.input_box.input_box, x))
+                    
+                # elif self.buttons[row][col].cget('text') == "Login":
+                #     self.buttons[row][col].bind("<Button>", func=lambda _: (
+                #         self.parent.destroy_window(self.parent.content_frame.winfo_children()),
+                #         self.parent.create_navbar()
+                        
+                #         ) if self.login_user(staff_id=self.input_box.input_box.get()) == True else "")   
+                    
+
+        return self.buttons
                 
     def is_logged_in(self):
         print("staff role: ", self.staff_role)
@@ -186,9 +187,8 @@ class Login(object):
         
         if self._login(staff_id):
             # Destroy the login frame if user is found.
-            # self.parent.destroy_window_children(self.parent.frame_content_2.winfo_children())
-            self.parent.content_frame.destroy()
-            # self.parent._update_main()
+            active_frames = self.parent.get_current_frames()
+            self.parent.destroy_frames(active_frames)
             return True
         
     def logout_user(self):

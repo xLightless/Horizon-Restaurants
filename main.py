@@ -79,7 +79,14 @@ class Main(object):
         
         # Display all the frames with tkinter's grid manager
         self.display_frames()
-        self.display_navbar()    
+        self.display_navbar() 
+        
+    def destroy_frames(self, window:ttk.Frame | tk.Frame | tk.Widget | ttk.Widget):
+        if type(window) == list:
+            for item in window:
+                item.destroy()
+        else:
+            window.destroy()
         
     def display_frames(self):
         """ Displays the top level frame for any children to be displayed on. """
@@ -123,12 +130,17 @@ class Main(object):
         # Get the child of the main frame
         content_frame_name = self.content_frame.winfo_name()
         content_frame_children = self.content_frame.winfo_children()
-        print(content_frame_name, content_frame_children)
+        # print(content_frame_name, content_frame_children)
         
         # if content_frame_name != content_frame_children[frame_number].winfo_name() or btn.cget('text') # name of navbar button:
             # do something
         
         # Check the page we are on to display the right nav buttons
+        
+    def get_current_frames(self):
+        """Gets all the current active frames of a paginated section. """
+        
+        return self.content_frame.winfo_children()
 
     
 class Application(object):
@@ -148,37 +160,66 @@ class Application(object):
         self.style = ttk.Style()
         
         # Add a main frame to master
-        main_frame = ttk.Frame(self.main.master, style='main_frame.TFrame', width=self.main.master.winfo_reqwidth(), height=self.main.master.winfo_reqheight())
+        main_frame = ttk.Frame(self.main.master, style='main_frame.TFrame', name="main_frame", width=self.main.master.winfo_reqwidth(), height=self.main.master.winfo_reqheight())
         main_frame.grid(row=0, column=0, sticky=tk.NSEW)        
         
         # Construct any windows/interfaces below
         self.main_window = Main(main_frame)
         self.login_interface = login.Login(self.main_window)
-        self.login_interface.display()
-        
-        # self.menu_interface = menu.Menu(self.main_window)
+        self.menu_interface = menu.Menu(self.main_window)
         # self.orders_interface = orders.Order(self.main_window)
         # self.payment_interface = payments.Payment(self.main_window)
         
-        # Home/Main
+        self.display_login()
         
-        # Login buttons
-        # self.login_interface.display(pages=[self.login_interface.display()])
+    def display_login(self):
+        """Top most level function to display the login page. """
         
-        # Menu buttons
+        login_buttons = self.login_interface.create_login_buttons_2d_list()
+        for row in range(len(login_buttons)):
+            for col in range(len(login_buttons[row])):
+                if self.login_interface.buttons[row][col].cget('text') != "Login":
+                    if self.login_interface.buttons[row][col].cget('text') == "<<":
+                        self.login_interface.buttons[row][col].configure(command=lambda: self.login_interface.input_box.on_tbx_delete(self.login_interface.input_box.input_box))
+                    else:
+                        self.login_interface.buttons[row][col].configure(command=lambda x=str(self.login_interface.buttons[row][col].cget("text")): self.login_interface.input_box.on_tbx_insert(self.login_interface.input_box.input_box, x))
+                    
+                elif self.login_interface.buttons[row][col].cget('text') == "Login":
+                    self.login_interface.buttons[row][col].bind("<Button>", func=lambda _: (
+                        # self.main_window.destroy_window(self.main_window.content_frame.winfo_children()),
+                        self.display_menu()
+                        
+                        ) if self.login_interface.login_user(staff_id=self.login_interface.input_box.input_box.get()) == True else "")   
+            
+            
+        self.login_interface.display_login_buttons(login_buttons)
+        self.login_interface.display_frames()
+
+    def display_menu(self):
+        """Top most level function to display the menu page. """
+        nav_buttons = self.main_window.create_navbar(nav_buttons=["Home", "Logout"], staff_role=self.login_interface.staff_role)
+        self.menu_interface.display()
+        
+        
         # self.menu_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
+        pass
         
-        # Orders buttons
+    def display_orders(self):
         # self.orders_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
-            
-        # Payments buttons
+        return
+    
+    def display_payments(self):
         # self.payments_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
-            
-        # Kitchen/Inventory buttons
+        return
+    
+    def display_kitchen(self):
         # self.kitchen_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
-            
-        # Reports buttons
+        return
+    
+    def display_reports(self):
         # self.reports_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
+        return
+
 
 if __name__ == '__main__':
     

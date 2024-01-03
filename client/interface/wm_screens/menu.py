@@ -20,12 +20,10 @@ class Menu(object):
         self.parent = parent
         self.style = ttk.Style()
         self.configure_style()
-        
-        self.main_frame = ttk.Frame(self.parent.frame_content_1)
 
     def configure_style(self):
 
-        frame_width = self.parent.frame_content_1.winfo_reqwidth()
+        frame_width = self.parent.content_frame.winfo_reqwidth()
 
         #self.style.configure("Binayam.TLabel", foreground="black", background = "black", font=("Helvetica", 12))
         #button = ttk.Button(root, text="Binayam", style="Binayam.TButton")
@@ -35,32 +33,30 @@ class Menu(object):
         
     def display(self):
         if str(type(self.parent)) == "<class '__main__.Main'>":
-            self.parent.style.configure("self.main_frame.TFrame", background=BACKGROUND_COLOR, bd=1, relief=tk.SOLID)
+            self.parent.style.configure("self.parent.content_frame.TFrame", background=BACKGROUND_COLOR, bd=1, relief=tk.SOLID)
+            # self.parent.content_frame.grid(row=0, column=0, sticky=tk.NSEW)
+            # self.parent.content_frame.grid_rowconfigure(0, weight=1)
+            # self.parent.content_frame.grid_rowconfigure(1, weight=1)
+            # self.parent.content_frame.grid_rowconfigure(2, weight=1)
+            # self.parent.content_frame.grid_columnconfigure(0, weight=1)
 
-            self.main_frame = ttk.Frame(self.parent.frame_content_1)
-            self.main_frame.grid(row=0, column=0, sticky=tk.NSEW)
-            self.main_frame.grid_rowconfigure(0, weight=1)
-            self.main_frame.grid_rowconfigure(1, weight=1)
-            self.main_frame.grid_rowconfigure(2, weight=1)
-            self.main_frame.grid_columnconfigure(0, weight=1)
-
-            menu_title_frame = ttk.Frame(self.main_frame)
-            menu_title_frame.grid(row=0, column=0)
+            menu_title_frame = ttk.Frame(self.parent.content_frame)
+            menu_title_frame.grid(row=0, column=1)
             menu_title_frame.grid_rowconfigure(0, weight=1)
             menu_title_frame.grid_rowconfigure(1, weight=1)
             menu_title_frame.grid_rowconfigure(2, weight=2)
 
-            menu_search_frame = ttk.Frame(self.main_frame)
+            menu_search_frame = ttk.Frame(self.parent.content_frame)
             menu_search_frame.grid(row=1, column=0)
 
-            menu_tree_frame = ttk.Frame(self.main_frame)
+            menu_tree_frame = ttk.Frame(self.parent.content_frame)
             menu_tree_frame.grid(row=2, column=0)
 
             search_label = ttk.Label(menu_search_frame, text="Search", style = "Binayam.TLabel")
             search_label.grid(row=0, column=0, padx=10, pady=10)
             search_label.bind("<Button>", self._query_menu_items)
 
-            # menu_label = ttk.Label(menu_title_frame, text="Menu", background="black", foreground="white",font=("Helvetica", int(self.main_frame.winfo_reqheight() * 0.1), "bold"))
+            # menu_label = ttk.Label(menu_title_frame, text="Menu", background="black", foreground="white",font=("Helvetica", int(self.parent.content_frame.winfo_reqheight() * 0.1), "bold"))
             # menu_label.grid(row=0, column=0, columnspan=3, sticky=tk.NSEW)
             # menu_label.configure(anchor="center")
 
@@ -100,7 +96,7 @@ class Menu(object):
             print(f"Menu: {search_query}")
         
     def hide(self):
-        self.main_frame.forget()
+        self.parent.content_frame.forget()
     
     def get_menu(self):
         """ Gets the menu and returns all items. """
