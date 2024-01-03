@@ -57,20 +57,20 @@ class Staff(object):
 class Login(object):  
     def __init__(self, parent):
         self.parent = parent
-        self.staff_role = 0
+        self.__staff_role = 1
         
         if str(type(self.parent)) == "<class '__main__.Main'>":
             self.style:ttk.Style = self.parent.style
-            self.style.configure("self.title_frame.TFrame", background=BACKGROUND_COLOR)
+            self.style.configure("title_frame.TFrame", background=BACKGROUND_COLOR)
             
             # Login Buttons for entering STAFF ID
             self.buttons=[
                 [1, 2, 3], [4, 5, 6], [7, 8, 9], ["Login", 0, "<<"]
             ]
             
-            self.title_frame = ttk.Frame(self.parent.content_frame, style="title_frame.TFrame", border=3, relief=tk.SOLID, name="title_frame")
-            self.input_frame = tk.Frame(self.parent.content_frame, name="input_frame")
-            self.numberpad_frame = tk.Frame(self.parent.content_frame, name="numberpad_frame")
+            self.title_frame = ttk.Frame(self.parent.content_frame, style="title_frame.TFrame", border=3, relief=tk.SOLID, name="title_frame_login")
+            self.input_frame = tk.Frame(self.parent.content_frame, name="input_frame_login")
+            self.numberpad_frame = tk.Frame(self.parent.content_frame, name="numberpad_frame_login")
             self.input_box = inputs.InputBox(self.input_frame, label_text="Staff ID: ", state='readonly')
           
     def display_frames(self):
@@ -132,28 +132,20 @@ class Login(object):
                 self.parent.style.configure(f"login_button_{row}_{col}.TButton", background=BACKGROUND_COLOR)
                 
                 # Update self.buttons to match the object
-                self.buttons[row][col] = btn
-                
-                # # Add commands to the buttons to allow the user to sign in with their STAFF ID
-                # if self.buttons[row][col].cget('text') != "Login":
-                #     if self.buttons[row][col].cget('text') == "<<":
-                #         self.buttons[row][col].configure(command=lambda: self.input_box.on_tbx_delete(self.input_box.input_box))
-                #     else:
-                #         self.buttons[row][col].configure(command=lambda x=str(self.buttons[row][col].cget("text")): self.input_box.on_tbx_insert(self.input_box.input_box, x))
+                self.buttons[row][col] = btn 
                     
-                # elif self.buttons[row][col].cget('text') == "Login":
-                #     self.buttons[row][col].bind("<Button>", func=lambda _: (
-                #         self.parent.destroy_window(self.parent.content_frame.winfo_children()),
-                #         self.parent.create_navbar()
-                        
-                #         ) if self.login_user(staff_id=self.input_box.input_box.get()) == True else "")   
-                    
-
         return self.buttons
                 
     def is_logged_in(self):
-        print("staff role: ", self.staff_role)
-        return True if self.staff_role else False
+        print("staff role: ", self.__staff_role)
+        return True if self.__staff_role else False
+    
+    def get_staff_role(self):
+        return self.__staff_role
+    
+    def set_staff_role(self, staff_role):
+        self.__staff_role = staff_role
+        return self.__staff_role
                     
     def _login(self, staff_id):
         """Internal function. """       
@@ -164,14 +156,14 @@ class Login(object):
             messagebox.showerror("Invalid Credentials Error!", InvalidCredentialsError())
             return False
         
-        # Get information about the user
         try:
+            # Get information about the user
             record = database.get_table_records_of_key("staff", "account_number", staff_id, True)
             record = record.to_dict('records')[0]
             
             # If staff_id found, create an instance of the staff id user
             staff = Staff()
-            self.staff_role = record['branch_role']
+            self.__staff_role = record['branch_role']
             staff.staff_id = record['account_number']
             staff.staff_name = "%s %s" % (record['staff_first_name'], record['staff_last_name'])
             
@@ -183,12 +175,16 @@ class Login(object):
             return False
         
     def login_user(self, staff_id):
-        """Logs the user into the system if credentials are correct. """
+        """Logs the user into the system if their credentials are correct. """
         
         if self._login(staff_id):
+            
+            # Suboptimal solution for checking if a object exists
+            # if 'login' in str(active_frames[0]).find('login')
+            
             # Destroy the login frame if user is found.
             active_frames = self.parent.get_current_frames()
-            self.parent.destroy_frames(active_frames)
+            self.parent.forget_frames(active_frames)
             return True
         
     def logout_user(self):

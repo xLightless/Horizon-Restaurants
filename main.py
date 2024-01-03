@@ -40,10 +40,11 @@ class Main(object):
         self.main_frame.grid_columnconfigure(2, weight=1)
         
         # Banner Frame
-        self.banner_frame = ttk.Frame(self.main_frame, style="bannerFrame.TFrame", name="bannerFrame")
+        self.banner_frame = ttk.Frame(self.main_frame, style="bannerframe.TFrame", name="bannerframe")
         self.banner_frame.grid_rowconfigure(0, weight=1)
         self.banner_frame.grid_rowconfigure(2, weight=1)
         self.banner_frame.grid_columnconfigure(0, weight=1)
+        self.banner_frame.grid_columnconfigure(1, weight=1)
         self.banner_frame.grid_columnconfigure(2, weight=1)
         
         # Banner Nav Frame
@@ -67,26 +68,37 @@ class Main(object):
         self.content_frame.grid_columnconfigure(2, weight=1)
         
         # self.style.configure("main_frame.TFrame", background=BACKGROUND_COLOR)
-        self.style.configure("bannerFrame.TFrame", background='blue')
-        self.style.configure("navigation.TFrame", background='red', border=1, relief=tk.SOLID)
-        self.style.configure("content_frame.TFrame", background='yellow')
+        self.style.configure("bannerframe.TFrame", background=BACKGROUND_COLOR)
+        self.style.configure("navigation.TFrame", background=BACKGROUND_COLOR)
+        self.style.configure("content_frame.TFrame", background=BACKGROUND_COLOR)
         self.lbl_title.label.configure(background=BACKGROUND_COLOR, fg='#FFFFFF')
         self.lbl_branch_id.label.configure(background=BACKGROUND_COLOR, fg='#FFFFFF')
         
-        # Create the navigation bar button objects
-        nav_buttons = ["Home", "Logout"]
-        self.nav_buttons = self.create_navbar(nav_buttons=nav_buttons, staff_role=0)
-        
         # Display all the frames with tkinter's grid manager
         self.display_frames()
-        self.display_navbar() 
-        
-    def destroy_frames(self, window:ttk.Frame | tk.Frame | tk.Widget | ttk.Widget):
+    
+    def destroy_frames(self, window: ttk.Frame | tk.Frame | tk.Widget | ttk.Widget):
         if type(window) == list:
             for item in window:
-                item.destroy()
+                if item != self.navigation_frame:  # Exclude navigation frame from destruction
+                    item.destroy()
         else:
-            window.destroy()
+            if window != self.navigation_frame:  # Exclude navigation frame from destruction
+                window.destroy()
+            
+    def forget_frames(self, window:ttk.Frame | tk.Frame | tk.Widget | ttk.Widget):
+        # Check if the window is the banner_frame and skip removal
+        try:
+            if window.winfo_name() == "bannerframe":
+                return
+        except AttributeError:
+            pass
+
+        if type(window) == list:
+            for item in window:
+                item.grid_forget()
+        else:
+            window.grid_forget()
         
     def display_frames(self):
         """ Displays the top level frame for any children to be displayed on. """
@@ -100,42 +112,88 @@ class Main(object):
         
         # Display Navigation
         self.navigation_frame.grid(row=0, column=1, columnspan=2, rowspan=2, padx=12, pady=12, sticky=tk.NSEW)
-        # for i in range(len(self.nav_buttons)):
-            
         
         # Display Main Content Frame
         self.content_frame.grid(row=1, column=0, columnspan=3, padx=self.padx, pady=self.pady, sticky=tk.NSEW)
-        
-    def create_navbar(self, nav_buttons:list, staff_role):
-        """Creates a list of navigation button tkinter objects for a pagination structure."""
-        
-        # Create a navbar
-        for i in range(len(nav_buttons)):
-            button = ttk.Button(self.navigation_frame, text=nav_buttons[i])
-            nav_buttons[nav_buttons.index(nav_buttons[i])] = button
-        return nav_buttons
+    
+    def create_navbar(self, nav_buttons: list, staff_role):
+        """Creates a navbar from a list of button names. """
+        navbar_buttons = []
+        base_navbar = ["Menu", "Orders","Payments", "Logout"]
+        if staff_role >= 5:  
+            for i in range(len(nav_buttons)):
+                button_name = nav_buttons[i].lower()
+                button = tk.Button(
+                    self.navigation_frame,
+                    text=nav_buttons[i],
+                    width=100 // len(nav_buttons),
+                    name=button_name,
+                    padx=self.padx,
+                    pady=self.pady
+                )
+                navbar_buttons.append(button)
+                
+        if (staff_role <= 4) and (staff_role >= 1):
+            for i in range(len(base_navbar)):
+                button_name = base_navbar[i].lower()
+                button = tk.Button(
+                    self.navigation_frame,
+                    text=base_navbar[i],
+                    width=100 // len(base_navbar),
+                    name=button_name,
+                    padx=self.padx,
+                    pady=self.pady
+                )
+                navbar_buttons.append(button)
+              
+                
+
+        # Check if the logout button is in button name and make it a 'danger' color
+        # This gives UX a peace of mind.
+        if "logout" == nav_buttons[i].lower():
+            button.configure(background='#FF5252', activebackground='#FF5252')
+        elif "logout" == base_navbar[i].lower():
+            button.configure(background='#FF5252', activebackground='#FF5252')
+
+        return navbar_buttons
         
     def del_navbar_button(self, nav_button:str):
         """ Deletes a navigation button from a button set via string type. """
         return
     
     def add_navbar_button(self, nav_button:dict):
-        """Add a new or previously existing nagivation button via hashmap."""
+        """Add a new or previously existing navigation button via hashmap."""
         return
     
-    def display_navbar(self):
+    def display_navbar_buttons(self, nav_buttons:list):
         """ Display the top level frame navigation bar based on the hierarchical priority of the user. """
-        
                 
+        self.destroy_frames(self.navigation_frame)
         # Get the child of the main frame
         content_frame_name = self.content_frame.winfo_name()
         content_frame_children = self.content_frame.winfo_children()
-        # print(content_frame_name, content_frame_children)
         
-        # if content_frame_name != content_frame_children[frame_number].winfo_name() or btn.cget('text') # name of navbar button:
-            # do something
+        self.navigation_frame.grid_rowconfigure(0, weight=1)
+        self.navigation_frame.grid_columnconfigure(0, weight=1)
         
-        # Check the page we are on to display the right nav buttons
+        # If 0, then frame is empty, resort to default nav.
+        # The other option is to get next content frame children as a baseline
+        # so we know which navigation items to display.
+        # for i in range(len(nav_buttons)):
+            
+        #         # If empty, create default navbar based on user access.
+        #         if len(content_frame_children) == 0:
+        #             self.style.configure(nav_buttons[i].winfo_name())
+        #             nav_buttons[i].grid(row=0, column=i, sticky=tk.NS+tk.E)
+        
+        
+        # ---------------------------------------------------------------------------------#
+        # Remove later. This is a test to see if the navbar displays after updating a frame.
+        for i in range(len(nav_buttons)):
+            self.style.configure(nav_buttons[i].winfo_name())
+            nav_buttons[i].grid(row=0, column=i, sticky=tk.NS+tk.E)
+        # ---------------------------------------------------------------------------------#
+
         
     def get_current_frames(self):
         """Gets all the current active frames of a paginated section. """
@@ -170,10 +228,27 @@ class Application(object):
         # self.orders_interface = orders.Order(self.main_window)
         # self.payment_interface = payments.Payment(self.main_window)
         
+        # Create the navigation bar button objects based on this list of application level tabs.
+        self.nav_btn_list = ["Menu", "Orders","Payments", "Kitchen", "Reports", "Logout"]
+        
         self.display_login()
+        # self.display_menu()
+        
+    # def login_user(self,):
+    #     self.display_menu()
+    #     staff_id, role = self.login_interface.login_user(staff_id=self.login_interface.input_box.input_box.get())
+    #     if staff_id:
+    #         self.login_interface.set_staff_role(role)
+    #         self.login_interface.staff.staff_id = staff_id
+            
+    #         print(self.login_interface.get_staff_role(), self.login_interface.staff.staff_id)
+    #         self.display_menu()
         
     def display_login(self):
         """Top most level function to display the login page. """
+        
+        # destroy the previous frames
+        self.main_window.destroy_frames(self.main_window.navigation_frame.winfo_children())
         
         login_buttons = self.login_interface.create_login_buttons_2d_list()
         for row in range(len(login_buttons)):
@@ -185,24 +260,37 @@ class Application(object):
                         self.login_interface.buttons[row][col].configure(command=lambda x=str(self.login_interface.buttons[row][col].cget("text")): self.login_interface.input_box.on_tbx_insert(self.login_interface.input_box.input_box, x))
                     
                 elif self.login_interface.buttons[row][col].cget('text') == "Login":
-                    self.login_interface.buttons[row][col].bind("<Button>", func=lambda _: (
-                        # self.main_window.destroy_window(self.main_window.content_frame.winfo_children()),
-                        self.display_menu()
-                        
-                        ) if self.login_interface.login_user(staff_id=self.login_interface.input_box.input_box.get()) == True else "")   
+                    self.login_interface.buttons[row][col].bind(
+                        "<Button>", 
+                        func=lambda _: (self.display_menu(), self.login_interface.set_staff_role(staff_role=9999999999999999999999))
+                        if self.login_interface.login_user(staff_id=self.login_interface.input_box.input_box.get()) == True else ""
+                    )   
             
-            
+        self.login_interface.display_frames()  
         self.login_interface.display_login_buttons(login_buttons)
-        self.login_interface.display_frames()
-
+    
     def display_menu(self):
         """Top most level function to display the menu page. """
-        nav_buttons = self.main_window.create_navbar(nav_buttons=["Home", "Logout"], staff_role=self.login_interface.staff_role)
-        self.menu_interface.display()
-        
-        
-        # self.menu_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
-        pass
+
+        # if hasattr(self, 'login_interface'):
+        #     # Destroy the old Login instance and its associated widgets
+        #     self.main_window.forget_frames(self.main_window.content_frame.winfo_children())
+
+        # Create a new Login instance in the case that the previous has been destroyed, forgotten, or removed by tkinter.
+        self.login_interface = login.Login(self.main_window)
+
+        # Check for existence before creating a new navigation frame
+        # if not hasattr(self.main_window, 'navigation_frame'):
+        #     self.main_window.navigation_frame = ttk.Frame(self.main_window.banner_frame, style="navigation.TFrame", name="navigation_frame")
+
+        nav_buttons = self.main_window.create_navbar(nav_buttons=self.nav_btn_list, staff_role=self.login_interface.get_staff_role())
+        self.main_window.display_navbar_buttons(nav_buttons=nav_buttons)
+        # Logout button
+        nav_buttons[-1].bind("<Button>", func=lambda _: (self.display_login()))
+
+    
+    
+    
         
     def display_orders(self):
         # self.orders_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
