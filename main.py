@@ -52,20 +52,21 @@ class Main(object):
         
         # Frame banner content
         self.lbl_title = headings.Heading6(self.banner_frame, text="Horizon Restaurants")
-        self.lbl_branch_id = headings.TextLabel(self.banner_frame, text="Branch ID: 123677")
+        self.lbl_branch_id = headings.TextLabel(self.banner_frame, text="")
         
         # Content frame to contain all navigation result elements
         self.content_frame = ttk.Frame(self.main_frame, style="content_frame.TFrame", name="content_frame")
         
-        # Fix height of title row
-        self.content_frame.grid_rowconfigure(0, weight=0)
-        
-        # Everything else is expandable
+        # Content frame grid
+        self.content_frame.grid_rowconfigure(0, weight=0) # Title row
         self.content_frame.grid_rowconfigure(1, weight=1)
         self.content_frame.grid_rowconfigure(2, weight=1)
         self.content_frame.grid_columnconfigure(0, weight=1)
         self.content_frame.grid_columnconfigure(1, weight=1)
         self.content_frame.grid_columnconfigure(2, weight=1)
+        
+        # Prevent the content frame from wrapping.
+        self.content_frame.grid_propagate(False)
         
         # self.style.configure("main_frame.TFrame", background=BACKGROUND_COLOR)
         self.style.configure("bannerframe.TFrame", background=BACKGROUND_COLOR)
@@ -74,8 +75,8 @@ class Main(object):
         self.lbl_title.label.configure(background=BACKGROUND_COLOR, fg='#FFFFFF')
         self.lbl_branch_id.label.configure(background=BACKGROUND_COLOR, fg='#FFFFFF')
         
-        # Display all the frames with tkinter's grid manager
-        self.display_frames()
+        # Display Main() frames with tkinter's grid manager
+        self._display_frames()
     
     def destroy_frames(self, window: ttk.Frame | tk.Frame | tk.Widget | ttk.Widget):
         if type(window) == list:
@@ -99,8 +100,8 @@ class Main(object):
                 item.grid_forget()
         else:
             window.grid_forget()
-        
-    def display_frames(self):
+            
+    def _display_frames(self):
         """ Displays the top level frame for any children to be displayed on. """
         
         # Display Banner Frame
@@ -116,46 +117,43 @@ class Main(object):
         # Display Main Content Frame
         self.content_frame.grid(row=1, column=0, columnspan=3, padx=self.padx, pady=self.pady, sticky=tk.NSEW)
     
-    def create_navbar(self, nav_buttons: list, staff_role):
+    def create_navbar(self, branch_role):
         """Creates a navbar from a list of button names. """
-        navbar_buttons = []
-        base_navbar = ["Menu", "Logout"]
-        if staff_role >= 5:  
-            for i in range(len(nav_buttons)):
-                button_name = nav_buttons[i].lower()
-                button = tk.Button(
-                    self.navigation_frame,
-                    text=nav_buttons[i],
-                    width=100 // len(nav_buttons),
-                    name=button_name,
-                    padx=self.padx,
-                    pady=self.pady
-                )
-                navbar_buttons.append(button)
-                
-        if (staff_role <= 4) and (staff_role >= 1):
-            for i in range(len(base_navbar)):
-                button_name = base_navbar[i].lower()
-                button = tk.Button(
-                    self.navigation_frame,
-                    text=base_navbar[i],
-                    width=100 // len(base_navbar),
-                    name=button_name,
-                    padx=self.padx,
-                    pady=self.pady
-                )
-                navbar_buttons.append(button)
-              
-                
-
+        nav_buttons = []
+        nav_button_obj_list = []
+        
+        match(branch_role):
+            case 1: # Staff
+                nav_buttons = ["Menu", "Logout"]
+            case 2: # Chef
+                nav_buttons = ["Menu", "Kitchen", "Logout"]
+            case 3: # Manager
+                nav_buttons = ["Menu", "Reservations", "Kitchen", "Reports", "Logout"]
+            case 4: # Admin
+                nav_buttons = ["Menu", "Reservations", "Kitchen", "Reports", "User Management", "Logout"]
+            case 5: # HR Director
+                nav_buttons = ["Reports", "Logout"]
+            case _: # Unknown
+                nav_buttons = ["Menu", "Logout"]
+        
+        for i in range(len(nav_buttons)):
+            button_name = nav_buttons[i].lower()
+            button = tk.Button(
+                self.navigation_frame,
+                text=nav_buttons[i],
+                width=100 // len(nav_buttons),
+                name=button_name,
+                padx=self.padx,
+                pady=self.pady
+            )
+            nav_button_obj_list.append(button)
+            
         # Check if the logout button is in button name and make it a 'danger' color
         # This gives UX a peace of mind.
         if "logout" == nav_buttons[i].lower():
             button.configure(background='#FF5252', activebackground='#FF5252')
-        elif "logout" == base_navbar[i].lower():
-            button.configure(background='#FF5252', activebackground='#FF5252')
 
-        return navbar_buttons
+        return nav_button_obj_list
         
     def del_navbar_button(self, nav_button:str):
         """ Deletes a navigation button from a button set via string type. """
@@ -241,15 +239,14 @@ class Application(object):
         self.login_staff = login.Staff()
         
         self.display_login()
-        # self.display_menu()
         
     def display_login(self):
         """Top most level function to display the login page. """
         
-        staff_id = tk.StringVar()
+        # Destroy any previous navigation system.
+        self.main_window.forget_frames(self.main_window.navigation_frame.winfo_children())
         
-        # destroy the previous frames
-        self.main_window.destroy_frames(self.main_window.navigation_frame.winfo_children())
+        # Create login buttons
         login_buttons = self.login_interface.create_login_buttons_2d_list()
         for row in range(len(login_buttons)):
             for col in range(len(login_buttons[row])):
@@ -264,26 +261,17 @@ class Application(object):
                         )
                     
                 elif self.login_interface.buttons[row][col].cget('text') == "Login":
-                    # self.login_interface.buttons[row][col].bind(
-                    #     "<Button>", 
-                    #     func=lambda _: (
-                    #         self.display_menu(),
-                    #     )
-                        
-                    #     if self.login_interface.login_user(staff_id=self.login_interface._input_box.input_box.get()) == True else False
-                    # )   
-                    
                     self.login_interface.buttons[row][col].configure(
                         command=lambda: (
-                            staff_id.set(self.login_interface._input_box.input_box.get()),
-                            self.staff.init_user(**staff_id)
+                            self.staff.init_staff(staff_id = self.login_interface._input_box.input_box.get()),
+                            self.main_window.lbl_branch_id.label.configure(text=f"HR Branch ID: {self.staff.branch_id.get()}"),
+                            self.display_menu(),
                         )
                         if self.login_interface.login_user(staff_id=self.login_interface._input_box.input_box.get()) == True else False
                     )
             
         self.login_interface.display_frames()  
         self.login_interface.display_login_buttons(login_buttons)
-        # print("STAFF ROLE: " + self.login_interface.get_staff_role())
     
     def display_menu(self):
         """Top most level function to display the menu page. """
@@ -292,13 +280,25 @@ class Application(object):
         self.login_interface = login.Login(self.main_window)
         
         # Create and display navbar
-        nav_buttons = self.main_window.create_navbar(nav_buttons=self.nav_btn_list, staff_role=self.login_interface.get_staff_role())
+        nav_buttons = self.main_window.create_navbar(branch_role=self.staff.branch_role.get())
         self.main_window.display_navbar_buttons(nav_buttons=nav_buttons)
         
         # Logout button
-        nav_buttons[-1].bind("<Button>", func=lambda _: (self.display_login()))
-
-    
+        nav_buttons[-1].bind("<Button>", func=lambda _: (
+            
+            # Forget (all) previous frames then display the new framed object.
+            self.main_window.forget_frames(self.main_window.content_frame.winfo_children()),
+            
+            # Empty branch ID on logout
+            self.main_window.lbl_branch_id.label.configure(text = ""),
+            
+            # Display the login page
+            self.display_login(),
+            )
+        )
+        
+        # Display the menu frames
+        self.menu_interface.display_frames()
     
     
         

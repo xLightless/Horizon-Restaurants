@@ -241,7 +241,10 @@ CREATE TABLE `reservations` (
   `date` date DEFAULT NULL,
   `time` time DEFAULT NULL,
   `table_number` int DEFAULT NULL,
-  PRIMARY KEY (`reservation_id`)
+  `branch_id` int DEFAULT NULL,
+  PRIMARY KEY (`reservation_id`),
+  KEY `branch_id_idx` (`branch_id`),
+  CONSTRAINT `branch_id` FOREIGN KEY (`branch_id`) REFERENCES `reservations` (`reservation_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -251,6 +254,7 @@ CREATE TABLE `reservations` (
 
 LOCK TABLES `reservations` WRITE;
 /*!40000 ALTER TABLE `reservations` DISABLE KEYS */;
+INSERT INTO `reservations` VALUES (1,'2023-05-28','10:30:12',42,1);
 /*!40000 ALTER TABLE `reservations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -263,16 +267,18 @@ DROP TABLE IF EXISTS `staff`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `staff` (
   `staff_idx` int NOT NULL,
-  `staff_first_name` varchar(45) NOT NULL,
-  `staff_last_name` varchar(45) NOT NULL,
-  `staff_phone` int NOT NULL,
+  `first_name` varchar(45) NOT NULL,
+  `last_name` varchar(45) NOT NULL,
+  `staff_id_number` int NOT NULL AUTO_INCREMENT,
+  `staff_id_password` varchar(256) NOT NULL,
+  `phone` varchar(15) NOT NULL,
+  `email` varchar(45) DEFAULT NULL,
   `branch_role` int NOT NULL,
-  `account_number` int NOT NULL AUTO_INCREMENT,
-  `account_password` varchar(256) NOT NULL,
   `branch_id` int DEFAULT NULL,
   PRIMARY KEY (`staff_idx`),
-  UNIQUE KEY `account_number_UNIQUE` (`account_number`),
-  UNIQUE KEY `account_password_UNIQUE` (`account_password`)
+  UNIQUE KEY `account_number_UNIQUE` (`staff_id_number`),
+  UNIQUE KEY `account_password_UNIQUE` (`staff_id_password`),
+  KEY `branch_id_idx` (`branch_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=123461 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -282,7 +288,7 @@ CREATE TABLE `staff` (
 
 LOCK TABLES `staff` WRITE;
 /*!40000 ALTER TABLE `staff` DISABLE KEYS */;
-INSERT INTO `staff` VALUES (1,'Binayam','Gurung',1234567,1,123456,'chickeneater',1),(2,'Reece','Turner',1234568,5,123459,'coder',2),(3,'Milo','Carroll',1234153,1,123460,'noclue',1),(4,'test','user',999999,5,1,'grenade',2);
+INSERT INTO `staff` VALUES (1,'Binayam','Gurung',123456,'chickeneater','1234567',NULL,1,4),(2,'Reece','Turner',123459,'coder','1234568',NULL,5,2),(3,'Milo','Carroll',123460,'noclue','1234153',NULL,1,5),(4,'staff','user',1,'grenade','999999',NULL,1,3),(5,'chef','user',2,'asdasd','123123123',NULL,2,8);
 /*!40000 ALTER TABLE `staff` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -295,4 +301,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-01-04 15:32:51
+-- Dump completed on 2024-01-04 19:46:55
