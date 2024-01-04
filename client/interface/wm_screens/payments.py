@@ -1,7 +1,7 @@
 
 from client.interface.toolkits.typography.font import *
 from client.interface.toolkits import inputs, headings
-from client.interface.wm_screens.inventory import Inventory
+# from client.interface.wm_screens.inventory import Inventory
 from client.settings import INITIAL_HEIGHT, INITIAL_WIDTH, NAVBAR_HEIGHT, BACKGROUND_COLOR, MAIN_GRID_BOXES
 from client.errors import InvalidCredentialsError
 from server.sql.database import database

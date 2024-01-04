@@ -22,27 +22,6 @@ class Order(object):
     def __init__(self, parent):
         """ Construct a tkinter frame for Orders. """
         self.parent = parent
-        
-        self.main_frame = tk.Frame(self.parent.frame_content_2)
-        
-    def display(self):
-        self.main_frame.grid(sticky=tk.NSEW)
-        self.main_frame.grid_rowconfigure(0, weight=0)
-        self.main_frame.grid_rowconfigure(1, weight=1)
-        self.main_frame.grid_rowconfigure(2, weight=1)
-        self.main_frame.grid_columnconfigure(0, weight=1)
-        
-        # Title frame for menu        
-        title_frame = ttk.Frame(self.main_frame, style="title_frame.TFrame", border=3, relief=tk.SOLID)
-        title_frame.grid(row=0, column=0, sticky=tk.NSEW)
-        title_frame.grid_columnconfigure(0, weight=1)
-        title_frame.grid_columnconfigure(1, weight=1)
-        title_frame.grid_columnconfigure(2, weight=1)
-        
-        # Title
-        title = headings.Heading6(title_frame, text="ORDERS")
-        title.label.grid(row=0, column=1, sticky=tk.NSEW)
-        title.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
     
     def get_menu(self) -> Menu:
         return Menu.get_menu()
