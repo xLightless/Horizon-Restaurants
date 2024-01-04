@@ -1,5 +1,5 @@
 from client.interface import Interface
-from client.interface.wm_screens import login, menu, admin, events, orders, payments, reports, reservations
+from client.interface.wm_screens import login, menu, admin, payments, reports, reservations
 from client.settings import *
 from client.interface.toolkits import headings
 from typing import Optional
@@ -119,7 +119,7 @@ class Main(object):
     def create_navbar(self, nav_buttons: list, staff_role):
         """Creates a navbar from a list of button names. """
         navbar_buttons = []
-        base_navbar = ["Menu", "Orders","Payments", "Logout"]
+        base_navbar = ["Menu", "Logout"]
         if staff_role >= 5:  
             for i in range(len(nav_buttons)):
                 button_name = nav_buttons[i].lower()
@@ -219,72 +219,82 @@ class Application(object):
         
         # Add a main frame to master
         main_frame = ttk.Frame(self.main.master, style='main_frame.TFrame', name="main_frame", width=self.main.master.winfo_reqwidth(), height=self.main.master.winfo_reqheight())
-        main_frame.grid(row=0, column=0, sticky=tk.NSEW)        
-        
-        # Construct any windows/interfaces below
-        self.main_window = Main(main_frame)
-        self.login_interface = login.Login(self.main_window)
-        self.menu_interface = menu.Menu(self.main_window)
-        # self.orders_interface = orders.Order(self.main_window)
-        # self.payment_interface = payments.Payment(self.main_window)
+        main_frame.grid(row=0, column=0, sticky=tk.NSEW) 
         
         # Create the navigation bar button objects based on this list of application level tabs.
-        self.nav_btn_list = ["Menu", "Orders","Payments", "Kitchen", "Reports", "Logout"]
+        self.nav_btn_list = ["Menu", "Kitchen", "Reports", "Logout"]       
+        
+        # Main Window
+        self.main_window = Main(main_frame)
+        
+        # Sub Windows
+        self.login_interface = login.Login(self.main_window)
+        self.menu_interface = menu.Menu(self.main_window)
+        
+        # Lowest level of staff
+        self.staff = login.Staff()
+        self.chef = login.Chef()
+        self.manager = login.Manager()
+        self.admin = login.Admin()
+        
+        # Create a staff instance
+        self.login_staff = login.Staff()
         
         self.display_login()
         # self.display_menu()
         
-    # def login_user(self,):
-    #     self.display_menu()
-    #     staff_id, role = self.login_interface.login_user(staff_id=self.login_interface.input_box.input_box.get())
-    #     if staff_id:
-    #         self.login_interface.set_staff_role(role)
-    #         self.login_interface.staff.staff_id = staff_id
-            
-    #         print(self.login_interface.get_staff_role(), self.login_interface.staff.staff_id)
-    #         self.display_menu()
-        
     def display_login(self):
         """Top most level function to display the login page. """
         
+        staff_id = tk.StringVar()
+        
         # destroy the previous frames
         self.main_window.destroy_frames(self.main_window.navigation_frame.winfo_children())
-        
         login_buttons = self.login_interface.create_login_buttons_2d_list()
         for row in range(len(login_buttons)):
             for col in range(len(login_buttons[row])):
                 if self.login_interface.buttons[row][col].cget('text') != "Login":
                     if self.login_interface.buttons[row][col].cget('text') == "<<":
-                        self.login_interface.buttons[row][col].configure(command=lambda: self.login_interface.input_box.on_tbx_delete(self.login_interface.input_box.input_box))
+                        self.login_interface.buttons[row][col].configure(
+                            command=lambda: self.login_interface._input_box.on_tbx_delete(self.login_interface._input_box.input_box)
+                        )
                     else:
-                        self.login_interface.buttons[row][col].configure(command=lambda x=str(self.login_interface.buttons[row][col].cget("text")): self.login_interface.input_box.on_tbx_insert(self.login_interface.input_box.input_box, x))
+                        self.login_interface.buttons[row][col].configure(
+                            command=lambda x=str(self.login_interface.buttons[row][col].cget("text")): self.login_interface._input_box.on_tbx_insert(self.login_interface._input_box.input_box, x)
+                        )
                     
                 elif self.login_interface.buttons[row][col].cget('text') == "Login":
-                    self.login_interface.buttons[row][col].bind(
-                        "<Button>", 
-                        func=lambda _: (self.display_menu(), self.login_interface.set_staff_role(staff_role=9999999999999999999999))
-                        if self.login_interface.login_user(staff_id=self.login_interface.input_box.input_box.get()) == True else ""
-                    )   
+                    # self.login_interface.buttons[row][col].bind(
+                    #     "<Button>", 
+                    #     func=lambda _: (
+                    #         self.display_menu(),
+                    #     )
+                        
+                    #     if self.login_interface.login_user(staff_id=self.login_interface._input_box.input_box.get()) == True else False
+                    # )   
+                    
+                    self.login_interface.buttons[row][col].configure(
+                        command=lambda: (
+                            staff_id.set(self.login_interface._input_box.input_box.get()),
+                            self.staff.init_user(**staff_id)
+                        )
+                        if self.login_interface.login_user(staff_id=self.login_interface._input_box.input_box.get()) == True else False
+                    )
             
         self.login_interface.display_frames()  
         self.login_interface.display_login_buttons(login_buttons)
+        # print("STAFF ROLE: " + self.login_interface.get_staff_role())
     
     def display_menu(self):
         """Top most level function to display the menu page. """
 
-        # if hasattr(self, 'login_interface'):
-        #     # Destroy the old Login instance and its associated widgets
-        #     self.main_window.forget_frames(self.main_window.content_frame.winfo_children())
-
         # Create a new Login instance in the case that the previous has been destroyed, forgotten, or removed by tkinter.
         self.login_interface = login.Login(self.main_window)
-
-        # Check for existence before creating a new navigation frame
-        # if not hasattr(self.main_window, 'navigation_frame'):
-        #     self.main_window.navigation_frame = ttk.Frame(self.main_window.banner_frame, style="navigation.TFrame", name="navigation_frame")
-
+        
+        # Create and display navbar
         nav_buttons = self.main_window.create_navbar(nav_buttons=self.nav_btn_list, staff_role=self.login_interface.get_staff_role())
         self.main_window.display_navbar_buttons(nav_buttons=nav_buttons)
+        
         # Logout button
         nav_buttons[-1].bind("<Button>", func=lambda _: (self.display_login()))
 
@@ -293,7 +303,16 @@ class Application(object):
     
         
     def display_orders(self):
-        # self.orders_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
+        ## Create Orders object 
+        
+        ## Display objects frames
+        
+        ## Display the widgets
+        
+        ## Update any functionality e.g. widget buttons, treeview, etc etc.
+           # self.orders_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
+        
+        
         return
     
     def display_payments(self):
@@ -302,6 +321,8 @@ class Application(object):
     
     def display_kitchen(self):
         # self.kitchen_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
+        
+        
         return
     
     def display_reports(self):
