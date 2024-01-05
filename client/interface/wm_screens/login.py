@@ -12,7 +12,7 @@ from client.interface.toolkits import inputs, headings
 from client.settings import INITIAL_HEIGHT, INITIAL_WIDTH, NAVBAR_HEIGHT, BACKGROUND_COLOR, MAIN_GRID_BOXES
 from client.errors import InvalidCredentialsError
 from server.sql.database import database
-from tkinter import messagebox
+from tkinter import messagebox, simpledialog
 
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -151,10 +151,61 @@ class Login(object):
             self._parent.forget_frames(active_frames)
             return True
         
+    def ask_for_password(self, staff_id):
+        """Asks for permissible access if the user is of importance. e.g. account management."""
+        
+        record = database.get_table_records_of_key("staff", "staff_id_number", staff_id, True)
+        record = record.to_dict('records')[0]
+        # Replace 'your_password' with the actual password you want to check against
+        staff_id_password = record['staff_id_password']
+
+        # Get the password from the user using simpledialog
+        password = simpledialog.askstring("Password", "Enter password:", show='*')
+
+        if password == staff_id_password:
+            return True
+        
+        messagebox.showerror("Invalid Credentials Error!", InvalidCredentialsError())
+        return False
+        
+    def check_access_rights(self, branch_role, staff_id):
+        """Check the users access rights to see if they are allowed in the system if its some arbitrary number."""
+        
+        print(f"ACCESS REQUEST: \nROLE: {branch_role} \nSTAFF ID: {staff_id}")
+        # Check the branch roles to see user priority
+        # If someone of importance then ask for a password.
+        # This is a security measure because they got destroy the database.
+        is_allowed = False
+        match(branch_role):
+            case 1:
+                is_allowed = True
+                pass
+            case 2: # Chef
+                is_allowed = self.ask_for_password(staff_id=staff_id)
+            
+            case 3: # Manager
+                is_allowed = self.ask_for_password(staff_id=staff_id)
+            
+            case 4: # Admin
+                is_allowed = self.ask_for_password(staff_id=staff_id)
+            
+            case 5: # HR Director
+                is_allowed = self.ask_for_password(staff_id=staff_id)
+            
+            case _: # Unknown. 
+                # This is in the event some arbitrary branch role was created and not
+                # checked for in the system logic.
+                messagebox.showerror("Invalid Credentials Error!", InvalidCredentialsError())
+                self._parent.forget_frames(self._parent.content_frame.winfo_children())
+                self._parent.forget_frames(self._parent.navigation_frame.winfo_children())
+                self._parent.lbl_branch_id.label.configure(text = "")
+                
+        # print(is_allowed)
+        return True if is_allowed else False
+        
 class Staff(object):
     def __init__(self):
         self.staff_id = tk.IntVar()
-        
         self.first_name = tk.StringVar()
         self.last_name = tk.StringVar()
         self.branch_role = tk.IntVar()
@@ -196,9 +247,6 @@ class Chef(Staff):
     def __init__(self):
         """Chef Staff Object. Inherits functionality from Staff. """
         super().__init__()
-        
-        self._chef_id = self.staff_id
-        self._chef_name = self.first_name
     
     
 class Manager(Chef):
@@ -206,17 +254,14 @@ class Manager(Chef):
         """Manager Staff Object. Inherits functionality from Chef. """
 
         super().__init__()
-        self._manager_id = self.staff_id
-        self._manager_name = self.first_name
         
         
 class Admin(Manager):
-    def __init__(self):
+    def __init__(self, staff_id):
         """Admin Staff Object. Inherits functionality from Manager. """
-        
+
         super().__init__()
-        self.admin_id = self.staff_id
-        self.admin_name = self.first_name
+        self.init_staff(staff_id=staff_id)
         
     def create_user(self, first_name, last_name, staff_id_number, staff_id_password, phone, email, branch_role, branch_id):
         return
@@ -227,7 +272,6 @@ class Admin(Manager):
     def get_users(self, df=False):
         record = database.get_table("staff", df)
         return record
-    
     
     
     

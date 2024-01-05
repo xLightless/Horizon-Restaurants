@@ -2,6 +2,7 @@ from client.interface import Interface
 from client.interface.wm_screens import login, menu, admin, payments, reports, reservations, kitchen
 from client.settings import *
 from client.interface.toolkits import headings
+from client.errors import InvalidCredentialsError
 from typing import Optional
 from functools import partial
 from server.sql.database import Database
@@ -239,13 +240,6 @@ class Application(object):
         
         # Lowest level of staff
         self.staff = login.Staff()
-        self.chef = login.Chef()
-        self.manager = login.Manager()
-        self.admin = login.Admin()
-        
-        # Create a staff instance
-        self.login_staff = login.Staff()
-        
         
         self.login_buttons = self.login_interface.create_login_buttons_2d_list()
         self.display_login()
@@ -267,8 +261,6 @@ class Application(object):
         # Home label staff id
         self.home_info.label.configure(bg=BACKGROUND_COLOR, fg='#FFFFFF', text=f"POS Management System. \nYour Personal Staff ID: {self.staff.staff_id.get()}.")
         self.home_info.label.grid(row=1, column=0, sticky=tk.N)
-        
-        # print(self.main_window.get_current_frames())
         
     def display_navbar(self):
         # Create and display navbar
@@ -326,12 +318,11 @@ class Application(object):
                                 # Configure staff object and update branch id.
                                 self.staff.init_staff(staff_id = self.login_interface._input_box.input_box.get()),
                                 self.main_window.lbl_branch_id.label.configure(text=f"HR Branch ID: {self.staff.branch_id.get()}"),
-                                
                                 self.login_interface._input_box.on_tbx_delete(self.login_interface._input_box.input_box),
                                 
-                                # Display the home page + navbar.
-                                self.display_navbar(),
-                                self.display_home()
+                                # Display the home page + navbar if accessed is granted other return to login page.
+                                ((self.display_navbar(),self.display_home()) 
+                                if self.login_interface.check_access_rights(branch_role=self.staff.branch_role.get(), staff_id=self.staff.staff_id.get()) == True else self.display_login())
                             )
                             if self.login_interface.login(staff_id=self.login_interface._input_box.input_box.get()) == True else False
                         )
@@ -355,7 +346,6 @@ class Application(object):
         
         # Create a new Login instance in the case that the previous has been destroyed, forgotten, or removed by tkinter.
         self.login_interface = login.Login(self.main_window)
-        
         # Display the menu frames
         self.menu_interface.display_frames()
         
@@ -368,6 +358,9 @@ class Application(object):
     
     def display_reports(self):
         # self.reports_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
+        return
+    
+    def display_user_management(self):
         return
 
 

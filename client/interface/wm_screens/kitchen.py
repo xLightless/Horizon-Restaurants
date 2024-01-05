@@ -15,6 +15,7 @@ class Kitchen(object):
             
             self.title_frame = ttk.Frame(self.parent.content_frame, style="title_frame.TFrame", border=3, relief=tk.SOLID, name="title_frame_kitchen")
             self.title = headings.Heading6(self.title_frame, text="asdasdasds")
+    
     def display_frames(self):
         self.title_frame.grid(row=0, column=0, sticky=tk.NSEW)
         self.title.label.grid()
