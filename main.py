@@ -1,5 +1,5 @@
 from client.interface import Interface
-from client.interface.wm_screens import login, menu, admin, payments, reports, reservations
+from client.interface.wm_screens import login, menu, admin, payments, reports, reservations, kitchen
 from client.settings import *
 from client.interface.toolkits import headings
 from typing import Optional
@@ -89,11 +89,11 @@ class Main(object):
             
     def forget_frames(self, window:ttk.Frame | tk.Frame | tk.Widget | ttk.Widget):
         # Check if the window is the banner_frame and skip removal
-        try:
-            if window.winfo_name() == "bannerframe":
-                return
-        except AttributeError:
-            pass
+        # try:
+        #     if window.winfo_name() == "bannerframe":
+        #         return
+        # except AttributeError:
+        #     pass
 
         if type(window) == list:
             for item in window:
@@ -112,7 +112,7 @@ class Main(object):
         self.lbl_branch_id.label.grid(row=1, column=0, sticky=tk.W)
         
         # Display Navigation
-        self.navigation_frame.grid(row=0, column=1, columnspan=2, rowspan=2, padx=12, pady=12, sticky=tk.NSEW)
+        self.navigation_frame.grid(row=0, column=1, columnspan=2, rowspan=2, padx=3, pady=12, sticky=tk.NSEW)
         
         # Display Main Content Frame
         self.content_frame.grid(row=1, column=0, columnspan=3, padx=self.padx, pady=self.pady, sticky=tk.NSEW)
@@ -135,12 +135,19 @@ class Main(object):
                 nav_buttons = ["Reports", "Logout"]
             case _: # Unknown
                 nav_buttons = ["Menu", "Logout"]
+                
+        # Remove navbar buttons if there is only logout and the existing page/frame.
+        # nav_buttons_length = len(nav_buttons)    
+        # if nav_buttons_length == 2:
+        #     del nav_buttons[nav_buttons_length-2]
         
+        # Create the button objects using the configured navbar list
         for i in range(len(nav_buttons)):
             button_name = nav_buttons[i].lower()
             button = tk.Button(
                 self.navigation_frame,
                 text=nav_buttons[i],
+                # width=100 // nav_buttons_length,
                 width=100 // len(nav_buttons),
                 name=button_name,
                 padx=self.padx,
@@ -217,10 +224,7 @@ class Application(object):
         
         # Add a main frame to master
         main_frame = ttk.Frame(self.main.master, style='main_frame.TFrame', name="main_frame", width=self.main.master.winfo_reqwidth(), height=self.main.master.winfo_reqheight())
-        main_frame.grid(row=0, column=0, sticky=tk.NSEW) 
-        
-        # Create the navigation bar button objects based on this list of application level tabs.
-        self.nav_btn_list = ["Menu", "Kitchen", "Reports", "Logout"]       
+        main_frame.grid(row=0, column=0, sticky=tk.NSEW)      
         
         # Main Window
         self.main_window = Main(main_frame)
@@ -228,6 +232,10 @@ class Application(object):
         # Sub Windows
         self.login_interface = login.Login(self.main_window)
         self.menu_interface = menu.Menu(self.main_window)
+        self.home_frame = ttk.Frame(self.main_window.content_frame, style="home_frame.TFrame", name="home_frame")
+        self.home_welcome = headings.Heading1(self.home_frame)
+        self.home_info = headings.TextLabel(self.home_frame)
+        self.kitchen_interface = kitchen.Kitchen(self.main_window)
         
         # Lowest level of staff
         self.staff = login.Staff()
@@ -238,64 +246,117 @@ class Application(object):
         # Create a staff instance
         self.login_staff = login.Staff()
         
+        
+        self.login_buttons = self.login_interface.create_login_buttons_2d_list()
         self.display_login()
         
-    def display_login(self):
-        """Top most level function to display the login page. """
+    def display_home(self):
+        """Display a template home page for the user after login. """
         
-        # Destroy any previous navigation system.
-        self.main_window.forget_frames(self.main_window.navigation_frame.winfo_children())
+        self.style.configure("home_frame.TFrame", background=BACKGROUND_COLOR)
+        self.home_frame.grid_rowconfigure(0, weight=1)
+        self.home_frame.grid_rowconfigure(1, weight=1)
+        self.home_frame.grid_columnconfigure(0, weight=1)
+        # self.home_frame.grid_columnconfigure(1, weight=1)
+        self.home_frame.grid(row=0, column=1, rowspan=3, sticky=tk.NSEW)
         
-        # Create login buttons
-        login_buttons = self.login_interface.create_login_buttons_2d_list()
-        for row in range(len(login_buttons)):
-            for col in range(len(login_buttons[row])):
-                if self.login_interface.buttons[row][col].cget('text') != "Login":
-                    if self.login_interface.buttons[row][col].cget('text') == "<<":
-                        self.login_interface.buttons[row][col].configure(
-                            command=lambda: self.login_interface._input_box.on_tbx_delete(self.login_interface._input_box.input_box)
-                        )
-                    else:
-                        self.login_interface.buttons[row][col].configure(
-                            command=lambda x=str(self.login_interface.buttons[row][col].cget("text")): self.login_interface._input_box.on_tbx_insert(self.login_interface._input_box.input_box, x)
-                        )
-                    
-                elif self.login_interface.buttons[row][col].cget('text') == "Login":
-                    self.login_interface.buttons[row][col].configure(
-                        command=lambda: (
-                            self.staff.init_staff(staff_id = self.login_interface._input_box.input_box.get()),
-                            self.main_window.lbl_branch_id.label.configure(text=f"HR Branch ID: {self.staff.branch_id.get()}"),
-                            self.display_menu(),
-                        )
-                        if self.login_interface.login_user(staff_id=self.login_interface._input_box.input_box.get()) == True else False
-                    )
-            
-        self.login_interface.display_frames()  
-        self.login_interface.display_login_buttons(login_buttons)
-    
-    def display_menu(self):
-        """Top most level function to display the menu page. """
+        # Home label heading
+        self.home_welcome.label.configure(bg=BACKGROUND_COLOR, fg='#FFFFFF', text=f"Welcome {self.staff.first_name.get()}!")
+        self.home_welcome.label.grid(row=0, column=0, sticky=tk.S)
 
-        # Create a new Login instance in the case that the previous has been destroyed, forgotten, or removed by tkinter.
-        self.login_interface = login.Login(self.main_window)
+        # Home label staff id
+        self.home_info.label.configure(bg=BACKGROUND_COLOR, fg='#FFFFFF', text=f"POS Management System. \nYour Personal Staff ID: {self.staff.staff_id.get()}.")
+        self.home_info.label.grid(row=1, column=0, sticky=tk.N)
         
+        # print(self.main_window.get_current_frames())
+        
+    def display_navbar(self):
         # Create and display navbar
-        nav_buttons = self.main_window.create_navbar(branch_role=self.staff.branch_role.get())
-        self.main_window.display_navbar_buttons(nav_buttons=nav_buttons)
+        self.navbar = self.main_window.create_navbar(branch_role=self.staff.branch_role.get())
+        self.main_window.display_navbar_buttons(nav_buttons=self.navbar)
         
         # Logout button
-        nav_buttons[-1].bind("<Button>", func=lambda _: (
-            
-            # Forget (all) previous frames then display the new framed object.
+        logout_button_int = -1
+        self.navbar[logout_button_int].bind("<Button>", func=lambda _: (
+            # Forget (all) previous frames to display a new frame object.
             self.main_window.forget_frames(self.main_window.content_frame.winfo_children()),
+            self.main_window.forget_frames(self.main_window.navigation_frame.winfo_children()),
             
             # Empty branch ID on logout
             self.main_window.lbl_branch_id.label.configure(text = ""),
             
             # Display the login page
-            self.display_login(),
+            self.display_login()
             )
         )
+        
+        # Bind every navbar button to their respective display function.
+        for button in range(len(self.navbar)+logout_button_int):
+            display_page = getattr(self, f"display_{self.navbar[button].cget('text').lower()}")
+            self.navbar[button].bind("<Button>", func=lambda _, page=display_page: ( 
+                self.main_window.forget_frames(self.main_window.content_frame.winfo_children()),
+                page(),
+                
+                # Show which frames are currently active on the screen
+                # print("\n***ACTIVE FRAMES ***"),
+                # print(frame.winfo_ismapped() for frame in self.main_window.main_frame.winfo_children()),
+            ))
+        
+    def display_login(self):
+        """Top most level function to display the login page. """
+        
+        def _create_btn_callbacks():
+            """Internal nested callback function. """
+            for row in range(len(self.login_buttons)):
+                for col in range(len(self.login_buttons[row])):
+                    if self.login_interface.buttons[row][col].cget('text') != "Login":
+                        if self.login_interface.buttons[row][col].cget('text') == "<<":
+                            self.login_interface.buttons[row][col].configure(
+                                command=lambda: self.login_interface._input_box.on_tbx_delete(self.login_interface._input_box.input_box)
+                            )
+                        else:
+                            self.login_interface.buttons[row][col].configure(
+                                command=lambda x=str(self.login_interface.buttons[row][col].cget("text")): self.login_interface._input_box.on_tbx_insert(self.login_interface._input_box.input_box, x)
+                            )
+                        
+                    elif self.login_interface.buttons[row][col].cget('text') == "Login":
+                        self.login_interface.buttons[row][col].configure(
+                            command=lambda: (
+                                # Configure staff object and update branch id.
+                                self.staff.init_staff(staff_id = self.login_interface._input_box.input_box.get()),
+                                self.main_window.lbl_branch_id.label.configure(text=f"HR Branch ID: {self.staff.branch_id.get()}"),
+                                
+                                self.login_interface._input_box.on_tbx_delete(self.login_interface._input_box.input_box),
+                                
+                                # Display the home page + navbar.
+                                self.display_navbar(),
+                                self.display_home()
+                            )
+                            if self.login_interface.login(staff_id=self.login_interface._input_box.input_box.get()) == True else False
+                        )
+
+            self.login_interface.display_frames()  
+            self.login_interface.display_login_buttons(self.login_buttons)
+    
+        try:
+            _create_btn_callbacks()
+            
+        except AttributeError:
+            # If this error is raised it means the program cannot find the created button objects
+            # therefore it resorted back to the default buttons names list causing tkinter attribute error.
+            # This is easily fixed by catching the error and re-intialising self.login_buttons to its original state.
+            self.login_buttons = self.login_interface.create_login_buttons_2d_list()
+            _create_btn_callbacks()
+            
+    def display_menu(self):
+        """Top most level function to display the menu page. """
+        
+        
+        # Create a new Login instance in the case that the previous has been destroyed, forgotten, or removed by tkinter.
+        self.login_interface = login.Login(self.main_window)
+        
+        # Display navbar
+        # self.display_navbar()
         
         # Display the menu frames
         self.menu_interface.display_frames()
@@ -321,7 +382,7 @@ class Application(object):
     
     def display_kitchen(self):
         # self.kitchen_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
-        
+        self.kitchen_interface.display_frames()
         
         return
     

@@ -115,7 +115,7 @@ class Login(object):
     def get_branch_role(self):
         return self._branch_role
         
-    def _login(self, staff_id):
+    def _login_user(self, staff_id):
         """Internal function. """       
         try:
             # Raise value error if parsed staff id is not an integer
@@ -142,9 +142,9 @@ class Login(object):
             messagebox.showerror("Invalid Credentials Error!", InvalidCredentialsError())
             return False
         
-    def login_user(self, staff_id) -> bool:
+    def login(self, staff_id) -> bool:
         """Logs the user into the system if their credentials are correct. """
-        if self._login(staff_id):
+        if self._login_user(staff_id):
             
             # Destroy the login frame if user is found.
             active_frames = self._parent.get_current_frames()
@@ -168,6 +168,7 @@ class Staff(object):
         record = record.to_dict('records')[0]
         
         # Set object instance variables to record values
+        self.staff_id.set(record['staff_id_number'])
         self.first_name.set(record['first_name'])
         self.last_name.set(record['last_name'])
         self.branch_id.set(record['branch_id'])
@@ -226,3 +227,9 @@ class Admin(Manager):
     def get_users(self, df=False):
         record = database.get_table("staff", df)
         return record
+    
+    
+    
+    
+    
+    

@@ -128,10 +128,10 @@ DROP TABLE IF EXISTS `menu_allergens`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `menu_allergens` (
   `menu_allergen_id` int NOT NULL AUTO_INCREMENT,
-  `menu_item_id` int DEFAULT NULL,
+  `menu_item_idx` int DEFAULT NULL,
   `allergen_id` int DEFAULT NULL,
   PRIMARY KEY (`menu_allergen_id`),
-  KEY `menu_item_id_idx` (`menu_item_id`)
+  KEY `menu_item_id_idx` (`menu_item_idx`)
 ) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -153,14 +153,14 @@ DROP TABLE IF EXISTS `menu_items`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `menu_items` (
-  `menu_item_id` int NOT NULL,
+  `menu_item_id` int NOT NULL AUTO_INCREMENT,
   `photo_url` varchar(4000) DEFAULT NULL,
   `item_name` varchar(45) DEFAULT NULL,
   `description` varchar(256) DEFAULT NULL,
   `price` float DEFAULT NULL,
   `category` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`menu_item_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -183,8 +183,8 @@ DROP TABLE IF EXISTS `orders`;
 CREATE TABLE `orders` (
   `order_id` int NOT NULL,
   `order_date` date DEFAULT NULL,
-  `reservation_id` int DEFAULT NULL,
   `order_time` time DEFAULT NULL,
+  `reservation_id` int DEFAULT NULL,
   PRIMARY KEY (`order_id`),
   KEY `reservation_id_idx` (`reservation_id`),
   CONSTRAINT `reservation_id` FOREIGN KEY (`reservation_id`) REFERENCES `reservations` (`reservation_id`)
@@ -197,6 +197,7 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
+INSERT INTO `orders` VALUES (1,'2023-11-17','18:15:30',1);
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -209,15 +210,13 @@ DROP TABLE IF EXISTS `payments`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `payments` (
   `payment_id` int NOT NULL AUTO_INCREMENT,
-  `customer_id` int NOT NULL,
-  `order_id` int NOT NULL,
-  `total_price` int DEFAULT NULL,
+  `total_price` double DEFAULT NULL,
+  `discounts` varchar(45) DEFAULT NULL,
+  `order_id` int DEFAULT NULL,
   PRIMARY KEY (`payment_id`),
-  KEY `customer_id_idx` (`customer_id`),
   KEY `order_id_idx` (`order_id`),
-  CONSTRAINT `customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`),
   CONSTRAINT `order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -226,6 +225,7 @@ CREATE TABLE `payments` (
 
 LOCK TABLES `payments` WRITE;
 /*!40000 ALTER TABLE `payments` DISABLE KEYS */;
+INSERT INTO `payments` VALUES (1,127,NULL,NULL);
 /*!40000 ALTER TABLE `payments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -241,10 +241,13 @@ CREATE TABLE `reservations` (
   `date` date DEFAULT NULL,
   `time` time DEFAULT NULL,
   `table_number` int DEFAULT NULL,
-  `branch_id` int DEFAULT NULL,
+  `branch_id` int NOT NULL,
+  `customer_id` int NOT NULL,
   PRIMARY KEY (`reservation_id`),
   KEY `branch_id_idx` (`branch_id`),
-  CONSTRAINT `branch_id` FOREIGN KEY (`branch_id`) REFERENCES `reservations` (`reservation_id`)
+  KEY `customer_id_idx` (`customer_id`),
+  CONSTRAINT `branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branch_locations` (`branch_id`),
+  CONSTRAINT `customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -254,7 +257,7 @@ CREATE TABLE `reservations` (
 
 LOCK TABLES `reservations` WRITE;
 /*!40000 ALTER TABLE `reservations` DISABLE KEYS */;
-INSERT INTO `reservations` VALUES (1,'2023-05-28','10:30:12',42,1);
+INSERT INTO `reservations` VALUES (1,'2023-05-28','10:30:12',42,1,1),(2,'2023-05-18','10:30:44',13,2,1);
 /*!40000 ALTER TABLE `reservations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -288,7 +291,7 @@ CREATE TABLE `staff` (
 
 LOCK TABLES `staff` WRITE;
 /*!40000 ALTER TABLE `staff` DISABLE KEYS */;
-INSERT INTO `staff` VALUES (1,'Binayam','Gurung',123456,'chickeneater','1234567',NULL,1,4),(2,'Reece','Turner',123459,'coder','1234568',NULL,5,2),(3,'Milo','Carroll',123460,'noclue','1234153',NULL,1,5),(4,'staff','user',1,'grenade','999999',NULL,1,3),(5,'chef','user',2,'asdasd','123123123',NULL,2,8);
+INSERT INTO `staff` VALUES (1,'Binayam','Gurung',123456,'chickeneater','1234567',NULL,1,4),(2,'Reece','Turner',123459,'coder','1234568',NULL,5,2),(3,'Milo','Carroll',123460,'noclue','1234153',NULL,1,5),(4,'staff','user',1,'grenade','999999',NULL,1,3),(5,'chef','user',2,'asdasd','123123123',NULL,2,8),(6,'manager','user',3,'cheeseballs','999',NULL,3,10),(7,'admin','user',4,'adminhaha','1000',NULL,4,0),(8,'hr director','user',5,'ezmoney','123123',NULL,5,0);
 /*!40000 ALTER TABLE `staff` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -301,4 +304,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-01-04 19:46:55
+-- Dump completed on 2024-01-05  0:02:48

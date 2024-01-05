@@ -26,14 +26,7 @@ class Menu(object):
         
         # Menu
         self.right_frame = ttk.Frame(self.parent.content_frame, style="right_frame.TFrame", name="right_frame", border=1, relief=tk.SOLID)
-        self.right_frame.grid_rowconfigure(0, weight=0)
-        self.right_frame.grid_rowconfigure(1, weight=1)
-        self.right_frame.grid_columnconfigure(0, weight=1)
-        
         self._title_frame = ttk.Frame(self.right_frame, style="menu_title_frame.TFrame", name="menu_title_frame")
-        self._title_frame.grid_columnconfigure(0, weight=1)
-        self._title_frame.grid_columnconfigure(1, weight=1)
-        self._title_frame.grid_columnconfigure(2, weight=1)
         
     def display_frames(self):
         # Search bar, orders review, payment
@@ -41,7 +34,14 @@ class Menu(object):
         
         # Menu
         self.right_frame.grid(row=0, column=1, rowspan=3, columnspan=2, sticky=tk.NSEW)
+        self.right_frame.grid_rowconfigure(0, weight=0)
+        self.right_frame.grid_rowconfigure(1, weight=1)
+        self.right_frame.grid_columnconfigure(0, weight=1)
+        
         self._title_frame.grid(row=0, column=0, sticky=tk.NSEW)
+        self._title_frame.grid_columnconfigure(0, weight=1)
+        self._title_frame.grid_columnconfigure(1, weight=1)
+        self._title_frame.grid_columnconfigure(2, weight=1)
         
         title = headings.Heading6(self._title_frame, text="Menu Items")
         title.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
