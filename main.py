@@ -292,7 +292,8 @@ class Application(object):
         
         # Bind every navbar button to their respective display function.
         for button in range(len(self.navbar)+logout_button_int):
-            display_page = getattr(self, f"display_{self.navbar[button].cget('text').lower()}")
+            button_name = self.navbar[button].cget('text').lower().replace(' ', '_')            
+            display_page = getattr(self, f"display_{button_name}")
             self.navbar[button].bind("<Button>", func=lambda _, page=display_page: ( 
                 self.main_window.forget_frames(self.main_window.content_frame.winfo_children()),
                 page(),
@@ -355,35 +356,14 @@ class Application(object):
         # Create a new Login instance in the case that the previous has been destroyed, forgotten, or removed by tkinter.
         self.login_interface = login.Login(self.main_window)
         
-        # Display navbar
-        # self.display_navbar()
-        
         # Display the menu frames
         self.menu_interface.display_frames()
-    
-    
         
-    def display_orders(self):
-        ## Create Orders object 
-        
-        ## Display objects frames
-        
-        ## Display the widgets
-        
-        ## Update any functionality e.g. widget buttons, treeview, etc etc.
-           # self.orders_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
-        
-        
-        return
-    
-    def display_payments(self):
-        # self.payments_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
+    def display_reservations(self):
         return
     
     def display_kitchen(self):
-        # self.kitchen_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
         self.kitchen_interface.display_frames()
-        
         return
     
     def display_reports(self):
