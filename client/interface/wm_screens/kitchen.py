@@ -19,7 +19,7 @@ class Kitchen(object):
             self.title = headings.Heading6(self.title_frame, text="Kitchen")
             
             # Kitchen Frame
-            self.kitchen_Frame = ttk.Frame(self.parent.content_frame, style="kitchen_frame.TFrame", border=3, relief=tk.SOLID, name="kitchen_frame")
+            self.kitchen_frame = ttk.Frame(self.parent.content_frame, style="kitchen_frame.TFrame", border=3, relief=tk.SOLID, name="kitchen_frame")
     
     def display_frames(self):
         """Display kitchen frames to the screen. """
@@ -35,7 +35,9 @@ class Kitchen(object):
         self.title.label.configure(bg=BACKGROUND_COLOR, fg='#FFFFFF')
         self.title.label.grid(row=0, column=0, columnspan=3, sticky=tk.NSEW)
         
-        # 
+        # Kitchen Frame
+        self.style.configure("kitchen_frame.TFrame", background=BACKGROUND_COLOR, border=3, relief=tk.SOLID)
+        self.kitchen_frame.grid(row=1, column=0, columnspan=3, rowspan=2, sticky=tk.NSEW)
         
         
         # Orders

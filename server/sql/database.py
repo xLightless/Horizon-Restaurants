@@ -420,3 +420,5 @@ class Database(object):
         
         
 database = Database(database="horizon_restaurants")
+
+# print(database.get_table("staff"))
