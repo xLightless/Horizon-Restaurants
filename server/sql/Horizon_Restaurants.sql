@@ -237,8 +237,7 @@ DROP TABLE IF EXISTS `reservations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `reservations` (
-  `reservation_id` int NOT NULL,
-  `date` date DEFAULT NULL,
+  `reservation_id` int NOT NULL, AUTO_INCREMENT
   `time` time DEFAULT NULL,
   `table_number` int DEFAULT NULL,
   `branch_id` int NOT NULL,
