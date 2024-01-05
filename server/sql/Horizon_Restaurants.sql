@@ -120,6 +120,43 @@ INSERT INTO `customer` VALUES (1,'Binayam','Gurung','2147483647',15),(2,'Bob','G
 UNLOCK TABLES;
 
 --
+-- Table structure for table `kitchen`
+--
+
+DROP TABLE IF EXISTS `kitchen`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `kitchen` (
+  `kitchen_id` int NOT NULL AUTO_INCREMENT,
+  `serve_date` date DEFAULT NULL,
+  `serve_time` time DEFAULT NULL,
+  `customer_id` int NOT NULL,
+  `reservation_id` int DEFAULT NULL,
+  `order_id` int DEFAULT NULL,
+  `staff_id` int DEFAULT NULL,
+  PRIMARY KEY (`kitchen_id`),
+  KEY `customer_id_idx` (`customer_id`),
+  KEY `reservation_id_idx` (`reservation_id`),
+  KEY `order_id_idx` (`order_id`),
+  KEY `staff_id_idx` (`staff_id`),
+  CONSTRAINT `customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`),
+  CONSTRAINT `order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`),
+  CONSTRAINT `reservation_id` FOREIGN KEY (`reservation_id`) REFERENCES `reservations` (`reservation_id`),
+  CONSTRAINT `staff_id` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`staff_idx`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `kitchen`
+--
+
+LOCK TABLES `kitchen` WRITE;
+/*!40000 ALTER TABLE `kitchen` DISABLE KEYS */;
+INSERT INTO `kitchen` VALUES (1,'2023-11-17','18:30:15',1,1,NULL,4);
+/*!40000 ALTER TABLE `kitchen` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `menu_allergens`
 --
 
@@ -131,7 +168,9 @@ CREATE TABLE `menu_allergens` (
   `menu_item_idx` int DEFAULT NULL,
   `allergen_id` int DEFAULT NULL,
   PRIMARY KEY (`menu_allergen_id`),
-  KEY `menu_item_id_idx` (`menu_item_idx`)
+  KEY `menu_item_id_idx` (`menu_item_idx`),
+  KEY `allergen_id_idx` (`allergen_id`),
+  CONSTRAINT `allergen_id` FOREIGN KEY (`allergen_id`) REFERENCES `allergens` (`allergen_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -159,6 +198,7 @@ CREATE TABLE `menu_items` (
   `description` varchar(256) DEFAULT NULL,
   `price` float DEFAULT NULL,
   `category` varchar(45) DEFAULT NULL,
+  `stock_level` int NOT NULL,
   PRIMARY KEY (`menu_item_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -169,7 +209,7 @@ CREATE TABLE `menu_items` (
 
 LOCK TABLES `menu_items` WRITE;
 /*!40000 ALTER TABLE `menu_items` DISABLE KEYS */;
-INSERT INTO `menu_items` VALUES (1,NULL,'Chicken Tenders','Six delicious, crispy chicken tenders.',13.5,'Main'),(2,NULL,'Chicken Wrap','Chicken wrap with a variety of vegetables.',11,'Main'),(3,NULL,'Chicken Burger','Very good chicken burger.',15.5,'Main'),(4,NULL,'Chicken Popcorn','Very nice bite-sized chicken popcorn.',6,'Main'),(5,NULL,'Chicken Shwarma','Amazing chicken shwarma.',17.55,'Main'),(6,NULL,'Salad Bowl','Very healthy salad bowl with a touch of vinegar.',5,'Side'),(7,NULL,'Fries','Freshly made fries.',4.65,'Side'),(8,NULL,'Sweet Potato Fries','Similar to regular fries but made with fresh sweet potatoes.',7,'Side'),(9,NULL,'Halloumi Sticks','Seven very nice halloumi sticks.',6.75,'Side'),(10,NULL,'Rice','Very fresh and fluffy rice.',5.5,'Side'),(11,NULL,'Coca Cola','Classic bottle of Coca Cola.',2,'Drink'),(12,NULL,'Sprite','Can of refreshing Sprite.',2,'Drink'),(13,NULL,'Orange Juice','Fresh orange juice from the fridge.',3.5,'Drink'),(15,NULL,'Pomegranate Juice','Homemade pomegranate juice.',5,'Drink'),(16,NULL,'Vanilla Icecream','A scoop of delicious vanilla ice cream.',6.5,'Dessert'),(17,NULL,'Chocolate Icecream','A scoop of rich chocolate ice cream.',6.5,'Dessert'),(18,NULL,'Strawberry Icecream','A scoop of refreshing strawberry ice cream.',6.5,'Dessert'),(19,NULL,'Tiramisu','Very nice tiramisu made with coffee from coffee beans.',9,'Dessert'),(20,NULL,'Cheesecake','Homemade cheesecake.',7,'Dessert'),(21,NULL,'Butternut Squash Soup','Nice and comforting butternut squash soup.',13,'Soup'),(22,NULL,'Creamy Wild Rice Soup','Good creamy soup with wild rice.',13,'Soup'),(23,NULL,'Potato Leek Soup','Amazing potato leek soup.',13,'Soup'),(24,NULL,'Broccoli Cheddar Soup','Magnificent broccoli cheddar soup.',13,'Soup'),(25,NULL,'White Bean Soup','Marvellous soup made with white beans.',13,'Soup');
+INSERT INTO `menu_items` VALUES (1,NULL,'Chicken Tenders','Six delicious, crispy chicken tenders.',13.5,'Main',0),(2,NULL,'Chicken Wrap','Chicken wrap with a variety of vegetables.',11,'Main',0),(3,NULL,'Chicken Burger','Very good chicken burger.',15.5,'Main',0),(4,NULL,'Chicken Popcorn','Very nice bite-sized chicken popcorn.',6,'Main',0),(5,NULL,'Chicken Shwarma','Amazing chicken shwarma.',17.55,'Main',0),(6,NULL,'Salad Bowl','Very healthy salad bowl with a touch of vinegar.',5,'Side',0),(7,NULL,'Fries','Freshly made fries.',4.65,'Side',0),(8,NULL,'Sweet Potato Fries','Similar to regular fries but made with fresh sweet potatoes.',7,'Side',0),(9,NULL,'Halloumi Sticks','Seven very nice halloumi sticks.',6.75,'Side',0),(10,NULL,'Rice','Very fresh and fluffy rice.',5.5,'Side',0),(11,NULL,'Coca Cola','Classic bottle of Coca Cola.',2,'Drink',0),(12,NULL,'Sprite','Can of refreshing Sprite.',2,'Drink',0),(13,NULL,'Orange Juice','Fresh orange juice from the fridge.',3.5,'Drink',0),(15,NULL,'Pomegranate Juice','Homemade pomegranate juice.',5,'Drink',0),(16,NULL,'Vanilla Icecream','A scoop of delicious vanilla ice cream.',6.5,'Dessert',0),(17,NULL,'Chocolate Icecream','A scoop of rich chocolate ice cream.',6.5,'Dessert',0),(18,NULL,'Strawberry Icecream','A scoop of refreshing strawberry ice cream.',6.5,'Dessert',0),(19,NULL,'Tiramisu','Very nice tiramisu made with coffee from coffee beans.',9,'Dessert',0),(20,NULL,'Cheesecake','Homemade cheesecake.',7,'Dessert',0),(21,NULL,'Butternut Squash Soup','Nice and comforting butternut squash soup.',13,'Soup',0),(22,NULL,'Creamy Wild Rice Soup','Good creamy soup with wild rice.',13,'Soup',0),(23,NULL,'Potato Leek Soup','Amazing potato leek soup.',13,'Soup',0),(24,NULL,'Broccoli Cheddar Soup','Magnificent broccoli cheddar soup.',13,'Soup',0),(25,NULL,'White Bean Soup','Marvellous soup made with white beans.',13,'Soup',0);
 /*!40000 ALTER TABLE `menu_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -184,10 +224,13 @@ CREATE TABLE `orders` (
   `order_id` int NOT NULL,
   `order_date` date DEFAULT NULL,
   `order_time` time DEFAULT NULL,
-  `reservation_id` int DEFAULT NULL,
+  `order_price` double DEFAULT NULL,
+  `order_discount` varchar(15) DEFAULT NULL,
+  `order_status` varchar(45) DEFAULT NULL,
+  `menu_item_id` int DEFAULT NULL,
   PRIMARY KEY (`order_id`),
-  KEY `reservation_id_idx` (`reservation_id`),
-  CONSTRAINT `reservation_id` FOREIGN KEY (`reservation_id`) REFERENCES `reservations` (`reservation_id`)
+  KEY `menu_item_id_idx` (`menu_item_id`),
+  CONSTRAINT `menu_item_id` FOREIGN KEY (`menu_item_id`) REFERENCES `menu_items` (`menu_item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -197,36 +240,8 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES (1,'2023-11-17','18:15:30',1);
+INSERT INTO `orders` VALUES (1,'2023-11-17','18:15:30',128.24,'\"STAFF20\"','\"Paid\"',NULL);
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `payments`
---
-
-DROP TABLE IF EXISTS `payments`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `payments` (
-  `payment_id` int NOT NULL AUTO_INCREMENT,
-  `total_price` double DEFAULT NULL,
-  `discounts` varchar(45) DEFAULT NULL,
-  `order_id` int DEFAULT NULL,
-  PRIMARY KEY (`payment_id`),
-  KEY `order_id_idx` (`order_id`),
-  CONSTRAINT `order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `payments`
---
-
-LOCK TABLES `payments` WRITE;
-/*!40000 ALTER TABLE `payments` DISABLE KEYS */;
-INSERT INTO `payments` VALUES (1,127,NULL,NULL);
-/*!40000 ALTER TABLE `payments` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -238,16 +253,10 @@ DROP TABLE IF EXISTS `reservations`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `reservations` (
   `reservation_id` int NOT NULL,
-  `date` date DEFAULT NULL,
-  `time` time DEFAULT NULL,
-  `table_number` int DEFAULT NULL,
-  `branch_id` int NOT NULL,
-  `customer_id` int NOT NULL,
-  PRIMARY KEY (`reservation_id`),
-  KEY `branch_id_idx` (`branch_id`),
-  KEY `customer_id_idx` (`customer_id`),
-  CONSTRAINT `branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branch_locations` (`branch_id`),
-  CONSTRAINT `customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
+  `date` date NOT NULL,
+  `time` time NOT NULL,
+  `table_number` int NOT NULL,
+  PRIMARY KEY (`reservation_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -257,7 +266,7 @@ CREATE TABLE `reservations` (
 
 LOCK TABLES `reservations` WRITE;
 /*!40000 ALTER TABLE `reservations` DISABLE KEYS */;
-INSERT INTO `reservations` VALUES (1,'2023-05-28','10:30:12',42,1,1),(2,'2023-05-18','10:30:44',13,2,1);
+INSERT INTO `reservations` VALUES (1,'2023-05-28','10:30:12',42),(2,'2023-05-18','10:30:44',13);
 /*!40000 ALTER TABLE `reservations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -291,7 +300,7 @@ CREATE TABLE `staff` (
 
 LOCK TABLES `staff` WRITE;
 /*!40000 ALTER TABLE `staff` DISABLE KEYS */;
-INSERT INTO `staff` VALUES (1,'Binayam','Gurung',123456,'chickeneater','1234567',NULL,1,4),(2,'Reece','Turner',123459,'coder','1234568',NULL,5,2),(3,'Milo','Carroll',123460,'noclue','1234153',NULL,1,5),(4,'staff','user',1,'grenade','999999',NULL,1,3),(5,'chef','user',2,'asdasd','123123123',NULL,2,8),(6,'manager','user',3,'cheeseballs','999',NULL,3,10),(7,'admin','user',4,'adminhaha','1000',NULL,4,0),(8,'hr director','user',5,'ezmoney','123123',NULL,5,0);
+INSERT INTO `staff` VALUES (1,'Binayam','Gurung',123456,'chickeneater','1234567',NULL,1,4),(2,'Reece','Turner',123459,'coder','1234568',NULL,5,2),(3,'Milo','Carroll',123460,'noclue','1234153',NULL,1,5),(4,'staff','user',1,'grenade','999999',NULL,1,3),(5,'chef','user',2,'asdasd','123123123',NULL,2,8),(6,'manager','user',3,'cheeseballs','999',NULL,3,10),(7,'admin','user',4,'adminhaha','1000',NULL,4,0),(8,'hr director','user',5,'ezmoney','123123',NULL,5,0),(9,'hacker','man',1337,'hackermanxd','9999999','hackerman@gmail.com',99999999,8);
 /*!40000 ALTER TABLE `staff` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -304,4 +313,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-01-05  0:02:48
+-- Dump completed on 2024-01-05 21:18:30

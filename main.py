@@ -5,7 +5,7 @@ from client.interface.toolkits import headings
 from client.errors import InvalidCredentialsError
 from typing import Optional
 from functools import partial
-from server.sql.database import Database
+from server.sql.database import database
 from tkinter import messagebox
 
 import tkinter as tk
@@ -353,7 +353,15 @@ class Application(object):
         return
     
     def display_kitchen(self):
+        """Top most level function to display the kitchen/order overview page. """
+        
+        self.active_orders = database.get_table("orders", True)
+        print(self.active_orders)
+        
+        
         self.kitchen_interface.display_frames()
+        
+        
         return
     
     def display_reports(self):

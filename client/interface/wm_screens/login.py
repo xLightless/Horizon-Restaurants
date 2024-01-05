@@ -188,9 +188,11 @@ class Login(object):
             
             case 4: # Admin
                 is_allowed = self.ask_for_password(staff_id=staff_id)
+                self._parent.lbl_branch_id.label.configure(text=""),
             
             case 5: # HR Director
                 is_allowed = self.ask_for_password(staff_id=staff_id)
+                self._parent.lbl_branch_id.label.configure(text=""),
             
             case _: # Unknown. 
                 # This is in the event some arbitrary branch role was created and not
