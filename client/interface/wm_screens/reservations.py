@@ -38,9 +38,10 @@ class ReservationBox:
         self.branch_id_entry.grid(row=3, column=1)
         self.customer_id_entry.grid(row=4, column=1)
 
-        # Button to initiate reservation creation
+        # Start reservation creation
         tk.Button(root, text="Make Reservation", command=self.make_reservation).grid(row=5, column=0, columnspan=2)
-
+        #delete reservation
+        tk.Button(root, text="Delete Reservation", command=self.delete_reservation).grid(row=7, column=0, columnspan=2)
     def make_reservation(self):
         # Get values from entry fields
         date = self.date_entry.get()
@@ -77,10 +78,37 @@ class ReservationBox:
         except pymysql.Error as e:
             # Show an error message if there's an problem with the database operation
             messagebox.showerror("Error", f"Error in making the reservation: {str(e)}")
+      
+     def delete_reservation(self):
+        # Get reservation ID from entry field
+        reservation_id = self.reservation_id_entry.get()
 
+        # confirm reservation exists and not empty
+        if not reservation_id:
+            messagebox.showerror("Error", "Reservation ID must be filled")
+            return
 
+        try:
+            # remoe the  reservation from the 'reservations' table in horizon dtb
+            self.cursor.execute('''
+                DELETE FROM reservations
+                WHERE reservation_id = %s
+            ''', (reservation_id,))
+
+            # make the change in dtb
+            self.conn.commit()
+
+            # when deleted succesfuly display 'deleted sucessfully'
+            messagebox.showinfo("Success", f"Reservation {reservation_id} deleted successfully!")
+
+            # Clear gui input entry box once deleted sucessfully
+            self.reservation_id_entry.delete(0, tk.END)
+
+        except pymysql.Error as e:
+            # Show error message if there's problem with deleting the reservation.
+            messagebox.showerror("Error", f"Error in deleting the reservation: {str(e)}")
 if __name__ == "__main__":
-    # Create Tkinter root gui window and start the application
+    # Make a Tkinter root gui window and start process
     root = tk.Tk()
     app = ReservationBox(root)
     root.mainloop()
