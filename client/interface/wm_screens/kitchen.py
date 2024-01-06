@@ -91,26 +91,7 @@ class Kitchen(object):
         self.active_orders_frame.grid(row=1, column=0, columnspan=2, sticky=tk.NSEW, padx=12, pady=12)
         
         self.treeview_orders.grid(row=0, column=0, rowspan=2, columnspan=3, sticky=tk.NSEW)
-        
-    def get_display_orders(self):
-        # If this number is set then the reservation has no table.
-        NO_TABLE_NUMBER = 999
 
-        # Get data from the database and filter the data for relevant columns.
-        orders = self.kitchen_orders.get_paid_orders().loc[:, ["order_id", "order_status", "menu_item_id"]]
-        menu = self.menu.get_menu_table().loc[:, ["menu_item_id", "item_name"]]
-        res = self.reservation.get_reservations()
-        
-        # Merge the data into a table
-        merged_data = pd.merge(pd.merge(orders, menu, on='menu_item_id', how='left'), res, left_on='order_id', right_on='reservation_id', how='left')
-        
-        # Filter out menu_item_id, reservation_id, date, and time.
-        merged_data = merged_data[['order_id', 'order_status', 'item_name', 'table_number']]
-        
-        # If the person did not set a reservation table, assume its for delivery or staff food.
-        merged_data['table_number'] = merged_data['table_number'].fillna(NO_TABLE_NUMBER)
-        
-        return merged_data
         
     def create_dynamic_headings(self):
         """Gets the treeview headings dynamically. Even if one is appended, it MAY be put onto the screen."""
@@ -127,7 +108,8 @@ class Kitchen(object):
     def populate_orders_display(self):
         """Fills the table with orders to complete. """
         
-        data = self.get_display_orders()
+        data = self.kitchen_orders.get_displayed_orders()
+        data = data.astype({'table_number': int})
         
         for key, value in data.iterrows():
             self.treeview_orders.insert('', "end", values=tuple(value))
@@ -143,7 +125,7 @@ class Kitchen(object):
         buttons.bind("<Button>", func=lambda _, data=self.treeview_orders.item(self.get_selected_row())['values'], row_id=self.treeview_orders.selection()[0]: (
             
             # Update on the screen the order has been cancelled.
-            self.treeview_orders.item(row_id, values=(data[0], "COMPLETED", data[2], data[3])),
+            self.treeview_orders.item(row_id, values=(data[0], "COMPLETED", data[2], int(data[3]))),
             
             # Update the database to cancel the item.
             self.kitchen_orders.mark_order_as_ready(primary_key_column_name="order_id", primary_key=data[0])
@@ -156,7 +138,7 @@ class Kitchen(object):
         buttons.bind("<Button>", func=lambda _, data=self.treeview_orders.item(self.get_selected_row())['values'], row_id=self.treeview_orders.selection()[0]: (
             
             # Update on the screen the order has been cancelled.
-            self.treeview_orders.item(row_id, values=(data[0], "CANCELLED", data[2], data[3])),
+            self.treeview_orders.item(row_id, values=(data[0], "CANCELLED", data[2], int(data[3]))),
             
             # Update the database to cancel the item.
             self.kitchen_orders.cancel_kitchen_order(primary_key_column_name="order_id", primary_key=data[0])
@@ -167,8 +149,7 @@ class Kitchen(object):
         
         # The selected row by the user.
         item_name = self.treeview_orders.item(self.get_selected_row())['values'][2]
-        print(item_name)
-        kitchen_orders = self.get_display_orders()
+        kitchen_orders = self.kitchen_orders.get_displayed_orders()
         
         item_name_bulk_total = len(kitchen_orders.loc[kitchen_orders['item_name'] == item_name])
         buttons.bind("<Button>", func=lambda _: (

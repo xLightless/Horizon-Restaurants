@@ -437,6 +437,27 @@ class SQLMenu(object):
         
 class SQLKitchenOrders(object):
     
+        
+    def get_displayed_orders(self):
+        # If this number is set then the reservation has no table.
+        NO_TABLE_NUMBER = 999
+
+        # Get data from the database and filter the data for relevant columns.
+        orders = self.get_paid_orders().loc[:, ["order_id", "order_status", "menu_item_id"]]
+        menu = SQLMenu().get_menu_table().loc[:, ["menu_item_id", "item_name"]]
+        res = SQLReservations().get_reservations()
+        
+        # Merge the data into a table
+        merged_data = pd.merge(pd.merge(orders, menu, on='menu_item_id', how='left'), res, left_on='order_id', right_on='reservation_id', how='left')
+        
+        # Filter out menu_item_id, reservation_id, date, and time.
+        merged_data = merged_data[['order_id', 'order_status', 'item_name', 'table_number']]
+        
+        # If the person did not set a reservation table, assume its for delivery or staff food.
+        merged_data['table_number'] = merged_data['table_number'].fillna(NO_TABLE_NUMBER)
+        
+        return merged_data
+    
     def get_orders(self, dataframe=True):
         """Return orders table. """
         
