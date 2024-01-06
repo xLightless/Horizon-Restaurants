@@ -31,7 +31,27 @@ class Database(object):
         )
         
         self.cursor = self.__db.cursor()
-        
+
+    def make_reservation(self, date, time, table_number, branch_id, customer_id):
+        """ Make a new reservation """
+        try:
+            query = "INSERT INTO reservations (date, time, table_number, branch_id, customer_id) VALUES (%s, %s, %s, %s, %s)"
+            values = (date, time, table_number, branch_id, customer_id)
+            self.cursor.execute(query, values)
+            self.__db.commit()
+        except Exception as e:
+            print(f"Error in making reservation: {str(e)}")
+
+    def delete_reservation(self, reservation_id):
+        """ Delete a reservation """
+        try:
+            query = "DELETE FROM reservations WHERE reservation_id = %s"
+            values = (reservation_id,)
+            self.cursor.execute(query, values)
+            self.__db.commit()
+        except Exception as e:
+            print(f"Error in deleting reservation: {str(e)}")
+            
     def get_table(self, table:str, dataframe:bool = False):
         """ Gets the raw table of a database. Can be used in polymorphism
 
