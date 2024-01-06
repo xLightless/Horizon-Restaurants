@@ -3,12 +3,13 @@ from tkinter import ttk, messagebox, simpledialog
 from client.interface.toolkits import headings
 from client.settings import BACKGROUND_COLOR
 from client.errors import InvalidCredentialsError
-from server.sql.database import database
+from server.sql.database import Database
 
 class ReservationBox:
-    def __init__(self, parent, staff_id):
+    def __init__(self, parent, staff_id, db):
         self._parent = parent
         self._staff_id = staff_id
+        self._db = db  # Pass the database object
 
         # Create and arrange GUI components
         self._title_frame = ttk.Frame(self._parent.content_frame, style="title_frame.TFrame", border=3, relief=tk.SOLID)
@@ -56,8 +57,8 @@ class ReservationBox:
             return
 
         try:
-            # Insert data into the 'reservations' table in the database
-            database.insert_into_reservations(reservation_id, date, time, table_number, branch_id, customer_id)
+            # Use the make_reservation method from the Database class
+            self._db.make_reservation(date, time, table_number, branch_id, customer_id)
 
             # If successful reservation is made
             messagebox.showinfo("Success", "Reservation made successfully!")
@@ -66,7 +67,7 @@ class ReservationBox:
             for entry in self._input_entries:
                 entry.delete(0, tk.END)
 
-        except InvalidCredentialsError as e:
+        except Exception as e:
             # Show an error message if there's a problem with the reservation operation
             messagebox.showerror("Error", f"Error in making the reservation: {str(e)}")
 
@@ -80,29 +81,29 @@ class ReservationBox:
             return
 
         try:
-            # Remove the reservation from the 'reservations' table in the database
-            database.delete_reservation_by_id(reservation_id)
+            # Use the delete_reservation method from the Database class
+            self._db.delete_reservation(reservation_id)
 
             # When deleted successfully display 'deleted successfully'
             messagebox.showinfo("Success", f"Reservation {reservation_id} deleted successfully!")
 
-        except InvalidCredentialsError as e:
+        except Exception as e:
             # Show error message if there's a problem with deleting the reservation
             messagebox.showerror("Error", f"Error in deleting the reservation: {str(e)}")
 
 
 if __name__ == "__main__":
-    # Connect to dtb
-    database.connect_to_database()
-
-    # creeate GUI window
+    # Connect to the database
+    db = Database(database="horizon_restaurants")
+    
+    # Create GUI window
     root = tk.Tk()
 
     # Assume staff_id is available after successful login (replace with actual staff_id logic)
     staff_id = "123456"
 
-    # Create an instance of the ReservationBox class
-    reservation_box = ReservationBox(root, staff_id)
+    # Create an instance of the ReservationBox class and pass the database object
+    reservation_box = ReservationBox(root, staff_id, db)
 
     # Start the Tkinter main loop
     root.mainloop()
