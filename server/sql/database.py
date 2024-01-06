@@ -421,4 +421,57 @@ class Database(object):
         
 database = Database(database="horizon_restaurants")
 
-# print(database.get_table("staff"))
+class SQLMenu(object):
+    def get_menu_table(self):
+        """Returns the whole menus table from the database. """
+        return database.get_table("menu_items", True)
+    
+    def get_menu(self):
+        """Gets a limited menu dataframe consisting of [item name, description, price]. """
+        
+        data = self.get_menu_table()
+        columns = ["item_name", "description", "price"]
+        data = data.loc[:, columns]
+        return data
+        
+        
+class SQLKitchenOrders(object):
+    
+    def get_orders(self, dataframe=True):
+        """Return orders table. """
+        
+        orders = database.get_table("orders", dataframe)
+        return orders
+    
+    def get_paid_orders(self):
+        """Returns only orders that have been paid for by customers but not plated. """
+        
+        orders = database.get_table_records_of_value("orders", "order_status", "PAID", True)
+        return orders      
+     
+    def cancel_kitchen_order(self, primary_key_column_name, primary_key):
+        """Updates an order to cancelled due to it being removed by kitchen staff. """
+        
+        database.update_table_record_value("orders", "order_status", "CANCELLED", primary_key_column_name, primary_key)
+     
+    def get_bulk_orders(self):
+        return
+    
+    def mark_order_as_ready(self,  primary_key_column_name, primary_key):
+        """Updates an order to 'mark as ready' by kitchen staff. """
+        
+        database.update_table_record_value("orders", "order_status", "COMPLETED", primary_key_column_name, primary_key)
+    
+    def get_sequential_orders(self, table_number:int):
+        return
+    
+    def check_category_item_availability(self, category_name:str) -> dict:
+        return
+    
+    def get_item(self, item_name:int) -> dict:
+        return
+    
+
+class SQLReservations(object):
+    def get_reservations(self):
+        return database.get_table("reservations", True)

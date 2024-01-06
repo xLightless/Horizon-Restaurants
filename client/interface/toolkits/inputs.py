@@ -96,6 +96,7 @@ class ButtonBox(Characters):
         
         self.__subinterface = Frame(interface)
         self.btn_list = []
+                
         for row in range(len(buttons)):
             for col in range(len(buttons[row])):
                 

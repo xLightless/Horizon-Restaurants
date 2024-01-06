@@ -355,10 +355,13 @@ class Application(object):
     def display_kitchen(self):
         """Top most level function to display the kitchen/order overview page. """
         
-        self.active_orders = database.get_table("orders", True)
-        print(self.active_orders)
+        # Delete pre-existing orders
+        self.kitchen_interface.unpopulate_orders_display()
         
-        
+        # Create a new kitchen interface.
+        order_management_buttons = self.kitchen_interface.create_management_buttons()
+        self.kitchen_interface.display_management_buttons(order_management_buttons)
+        self.kitchen_interface.create_dynamic_headings()
         self.kitchen_interface.display_frames()
         
         

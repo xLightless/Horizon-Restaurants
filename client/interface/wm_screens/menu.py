@@ -9,8 +9,8 @@
 # from client.interface.wm_screens.inventory import Inventory
 from client.interface.toolkits import headings
 from client.settings import BACKGROUND_COLOR
-# from server.sql.database import database
-from server.sql.database import Database
+from server.sql.database import database
+# from server.sql.database import Database
 from PIL import Image, ImageTk
 import requests
 from io import BytesIO
@@ -41,13 +41,13 @@ class Menu(object):
         self.menu_captions_frame = ttk.Frame(self.right_frame, style="menu_captions_frame.TFrame", name="menu_captions_frame")
         
 
-        self.menu_items_canvas = tk.Canvas(self.right_frame)
+        self.menu_items_canvas = tk.Canvas(self.right_frame, bg=BACKGROUND_COLOR)
         self.menu_items_scrollbar = ttk.Scrollbar(self.right_frame, orient="vertical", command=self.menu_items_canvas.yview)
         self.menu_items_canvas.configure(yscrollcommand=self.menu_items_scrollbar.set)
         self.menu_items_frame = ttk.Frame(self.menu_items_canvas)
         self.menu_items_canvas.create_window((0, 0), window=self.menu_items_frame, anchor="nw") #tk is not capital letters
 
-        self.display_menu_items() # Function to display menu items by repeating create_menu_item_row for number of rows in the table.
+        # self.display_menu_items() # Function to display menu items by repeating create_menu_item_row for number of rows in the table.
         #self. 
         
     def display_frames(self):
@@ -130,7 +130,7 @@ class Menu(object):
         self.menu_items_frame.grid(row=2, column =0, sticky=tk.NSEW)
 
         self.menu_items_canvas.grid(row=2, column=0, sticky=tk.NSEW)
-        self.menu_items_scrollbar.grid(row=2, column=1, sticky="NSEW")
+        self.menu_items_scrollbar.grid(row=2, column=1, sticky=tk.NSEW)
 
         #Grid the widgets
         title.label.grid(row=0, column=0, columnspan=3, rowspan = 1, sticky=tk.NSEW)
@@ -144,10 +144,10 @@ class Menu(object):
         
         # Hacking the main database  
         photo_url, item_name, description, price = menu_item[1], menu_item[2], menu_item[3], menu_item[4]
-
+        
         #Frames
         item_frame = ttk.Frame(parent_frame)
-        item_frame.grid(row=row_number, column=0, sticky="EW")
+        item_frame.grid(row=row_number, column=0, sticky=tk.EW)
 
         #Grid Configurations
 
@@ -173,27 +173,32 @@ class Menu(object):
         # img_data = img_data.resize((100, 100), Image.Resampling.LANCZOS)
         #------------------#
         
-        response = requests.get(photo_url) # HTTP Get request to URL
-        img_data = Image.open(BytesIO(response.content)) # "response.content" is byte data so creates images frmo bytes
+        if photo_url is not None:
+            response = requests.get(photo_url) # HTTP Get request to URL
+            img_data = Image.open(BytesIO(response.content)) # "response.content" is byte data so creates images frmo bytes
+        else:
+            img_data = Image.new("RGB", (800, 1280), (255, 255, 255))
+            
         img_data = img_data.resize((64, 64), Image.Resampling.LANCZOS) # resizes, use LANCZOS instead of ANTIALIAS for some reason, newer version uses LANCZOS
-        photo = ImageTk.PhotoImage(img_data)#===============================================#
+        photo = ImageTk.PhotoImage(img_data) #===============================================#
         img_label = ttk.Label(item_frame, image=photo) # Can't move this or wont access     #                                 
         img_label.image = photo  #Very important step, fixes the whole image displaying code#
-
+        
         # Widgets
-        name_label = ttk.Label(item_frame, text=item_name, anchor="left", justify="center")
-        desc_label = ttk.Label(item_frame, text=description, font=('Helvetica', 8), anchor="left", justify="center")
-        price_label = ttk.Label(item_frame, text=f"£{price}", anchor="left", justify="center")
+        name_label = ttk.Label(item_frame, text=item_name, anchor="w", justify="center")
+        desc_label = ttk.Label(item_frame, text=description, font=('Helvetica', 8), anchor="w", justify="center")
+        price_label = ttk.Label(item_frame, text=f"£{price}", anchor="w", justify="center")
         allergens_button = ttk.Button(item_frame, text="View Allergens")
         order_button = ttk.Button(item_frame, text="Add to Order")
 
-        #Grid Widgets        
-        img_label.grid(row=0,rowspan= 3, column=0, sticky="NSEW")
-        name_label.grid(row=1,column=1, sticky="NSEW")
+        # Grid Widgets        
+        img_label.grid(row=0, rowspan=3, column=0, sticky="NSEW")
+        name_label.grid(row=1, column=1, sticky="NSEW")
         desc_label.grid(row=1, column=2, sticky="NSEW")
-        price_label.grid(row=2, column=3, columnspan=2, sticky = "NSEW")
-        allergens_button.grid(row=0, rowspan= 2,column=3, sticky = "NSEW")
-        order_button.grid(row=0, rowspan=2,column=4, sticky = "NSEW")
+        price_label.grid(row=2, column=3, columnspan=2, sticky="NSEW")
+        allergens_button.grid(row=0, rowspan=2, column=3, sticky="NSEW")
+        order_button.grid(row=0, rowspan=2, column=4, sticky="NSEW")
+
 
     def display_menu_items(self):
         database = Database(database="horizon_restaurants")
