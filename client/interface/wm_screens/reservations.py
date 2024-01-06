@@ -3,15 +3,14 @@ from tkinter import ttk, messagebox, simpledialog
 from client.interface.toolkits import headings
 from client.settings import BACKGROUND_COLOR
 from client.errors import InvalidCredentialsError
-from server.sql.database import Database
+from server.sql.database import database
 
 class ReservationBox:
-    def __init__(self, parent, staff_id, db):
+    def __init__(self, parent, staff_id):
         self._parent = parent
         self._staff_id = staff_id
-        self._db = db  # Pass the database object
 
-        # Create and arrange GUI components
+        # making and arranging GUI display
         self._title_frame = ttk.Frame(self._parent.content_frame, style="title_frame.TFrame", border=3, relief=tk.SOLID)
         self._input_frame = tk.Frame(self._parent.content_frame)
         self._reservation_frame = tk.Frame(self._parent.content_frame)
@@ -25,13 +24,13 @@ class ReservationBox:
         self._create_reservation_buttons()
 
     def _create_title(self):
-        title = headings.Heading6(self._title_frame, text="Reservations System Page")
-        title.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
+        title = headings.Heading6(self._title_frame, text="Horizon Restaurants Make A Reservation")
+        title.label.configure(background="#3498db", fg="#FFFFFF")  # blue bg
         title.label.grid(row=0, column=1, sticky=tk.NSEW)
 
     def _create_input_fields(self):
-        # Create and arrange input fields
-        labels = ["Reservation ID:", "Date:", "Time:", "Table Number:", "Branch ID:", "Customer ID:"]
+        # creating input boxes
+        labels = ["Customer Name:", "Date:", "Time:", "Table Number:"]
         entries = []
 
         for i, label in enumerate(labels):
@@ -43,31 +42,31 @@ class ReservationBox:
         self._input_entries = entries
 
     def _create_reservation_buttons(self):
-        # Create and arrange reservation buttons
-        tk.Button(self._input_frame, text="Make Reservation", command=self.make_reservation).grid(row=6, column=0, columnspan=2)
-        tk.Button(self._reservation_frame, text="Delete Reservation", command=self.delete_reservation).grid(row=0, column=0, columnspan=2)
+        # make and delete reservation buttons
+        tk.Button(self._input_frame, text="Make the Reservation", command=self.make_reservation).grid(row=4, column=0, columnspan=2)
+        tk.Button(self._reservation_frame, text="Delete the Reservation", command=self.delete_reservation).grid(row=0, column=0, columnspan=2)
 
     def make_reservation(self):
-        # Get values from input fields
-        reservation_id, date, time, table_number, branch_id, customer_id = [entry.get() for entry in self._input_entries]
+        # get inputs from input fields
+        customer_name, date, time, table_number = [entry.get() for entry in self._input_entries]
 
-        # Validate non-empty entries
-        if not all([reservation_id, date, time, table_number, branch_id, customer_id]):
+        # validate non empty inputs
+        if not all([customer_name, date, time, table_number]):
             messagebox.showerror("Error", "All fields must be filled")
             return
 
         try:
-            # Use the make_reservation method from the Database class
-            self._db.make_reservation(date, time, table_number, branch_id, customer_id)
+            # Replace with actual method to make a reservation
+            reservation_id = database.make_reservation(customer_name, date, time, table_number)
 
             # If successful reservation is made
-            messagebox.showinfo("Success", "Reservation made successfully!")
+            messagebox.showinfo("Success", f"Reservation was  made successfully! Reservation ID: {reservation_id}")
 
             # Clear entry boxes after successful reservation
             for entry in self._input_entries:
                 entry.delete(0, tk.END)
 
-        except Exception as e:
+        except InvalidCredentialsError as e:
             # Show an error message if there's a problem with the reservation operation
             messagebox.showerror("Error", f"Error in making the reservation: {str(e)}")
 
@@ -81,29 +80,29 @@ class ReservationBox:
             return
 
         try:
-            # Use the delete_reservation method from the Database class
-            self._db.delete_reservation(reservation_id)
+            # Replace with actual method to delete a reservation
+            database.delete_reservation_by_id(reservation_id)
 
             # When deleted successfully display 'deleted successfully'
             messagebox.showinfo("Success", f"Reservation {reservation_id} deleted successfully!")
 
-        except Exception as e:
+        except InvalidCredentialsError as e:
             # Show error message if there's a problem with deleting the reservation
             messagebox.showerror("Error", f"Error in deleting the reservation: {str(e)}")
 
 
 if __name__ == "__main__":
-    # Connect to the database
-    db = Database(database="horizon_restaurants")
-    
-    # Create GUI window
+    # Connect to database
+    database.connect_to_database()
+
+    # create GUI window
     root = tk.Tk()
 
-    # Assume staff_id is available after successful login (replace with actual staff_id logic)
+    
     staff_id = "123456"
 
-    # Create an instance of the ReservationBox class and pass the database object
-    reservation_box = ReservationBox(root, staff_id, db)
+    # create  instance of the ReservationBox class
+    reservation_box = ReservationBox(root, staff_id)
 
     # Start the Tkinter main loop
     root.mainloop()
