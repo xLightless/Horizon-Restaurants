@@ -1,387 +1,308 @@
-from client.interface import Interface
-from client.interface.wm_screens import login, menu, admin, payments, reports, reservations, kitchen
-from client.settings import *
+# --------------------------------------------------------------------------------------- #
+# 
+#   This is the MENU page window manager screen module.
+#   Any functions related to this particular interface should
+#   specifically be programmed in this environment.
+# 
+# --------------------------------------------------------------------------------------- #
+
+# from client.interface.wm_screens.inventory import Inventory
 from client.interface.toolkits import headings
-from client.errors import InvalidCredentialsError
-from typing import Optional
-from functools import partial
-from server.sql.database import database
-from tkinter import messagebox
-
-import tkinter as tk
+from client.settings import BACKGROUND_COLOR
+from server.sql.database import SQLMenu
+from PIL import Image, ImageTk
+import requests
+from io import BytesIO
 import tkinter.ttk as ttk
+import tkinter as tk
 
-app_settings = {
-    "title" : TITLE,
-    "wm_resizable" : {
-        "width": True,
-        "height": True
-    },
-    "bg":'red'
-}
-
-class Main(object):
-    def __init__(self, main_frame:ttk.Frame, xy_padding:bool = False):
+class Menu(object):
+    def __init__(self, parent):
+        """ Construct a tkinter frame for Menu. """
+        # self._inventory = Inventory()
+        self.parent = parent
         self.style = ttk.Style()
+        self.menu = SQLMenu()
+        #sql.menu.get
+
+        # Search bar, orders review, payment
+        # Each item should be treated as its own independent object ho lwever hardcoding orders/payments is fine
+        self.left_frame = ttk.Frame(self.parent.content_frame, style="left_frame.TFrame", name="left_frame", border=1, relief=tk.SOLID)
+        self.search_frame = ttk.Frame(self.left_frame, style ="search_frame.TFrame", name = "search_frame")
+        self.orders_frame = ttk.Frame(self.left_frame, style ="orders_frame.TFrame", name = "order_frame")
+        self.total_order_frame = ttk.Frame(self.orders_frame, style="total_order_frame.TFrame", name = "total_order_frame") # WIP
+        self.payment_frame = ttk.Frame(self.orders_frame, style = "payment_frame.TFrame", name = "payment_frame") # Include Payment and Delete orders button.
         
-        # Toggle Relative Padding
-        match (xy_padding):
-            case True:
-                self.padx = 3
-                self.pady = 3
-            case False:
-                self.padx = 0
-                self.pady = 0
+        # Menu
+        self.right_frame = ttk.Frame(self.parent.content_frame, style="right_frame.TFrame", name="right_frame", border=1, relief=tk.SOLID)
+        self._title_frame = ttk.Frame(self.right_frame, style="menu_title_frame.TFrame", name="menu_title_frame")
+        self.menu_captions_frame = ttk.Frame(self.right_frame, style="menu_captions_frame.TFrame", name="menu_captions_frame")
+        self.menu_items_frame = ttk.Frame(self.right_frame, style="menu_items_frame.TFrame", name="menu_items_frame")
+
+        self.preload_menu_images()
+        self.display_menu_items()
         
-        # Main Frame
-        self.main_frame = main_frame
-        self.main_frame.grid_rowconfigure(1, weight=1)
-        self.main_frame.grid_columnconfigure(0, weight=1)
-        self.main_frame.grid_columnconfigure(1, weight=1)
-        self.main_frame.grid_columnconfigure(2, weight=1)
+    def display_frames(self):
+        # Left side with includes the frames for the search bars and orders
+        self.left_frame.grid_rowconfigure(0, weight=1)
+        self.left_frame.grid_rowconfigure(1, weight=1)
+        self.left_frame.grid_columnconfigure(0, weight=1)
+
+        # Search bar frame
+        self.search_frame.grid_rowconfigure(0, weight=0)
+        self.search_frame.grid_rowconfigure(1, weight=1)
+        self.search_frame.grid_rowconfigure(2, weight=6)
+        self.search_frame.grid_columnconfigure(0, weight=1)
+        self.search_frame.grid_columnconfigure(1, weight=1)
+        self.search_frame.grid_columnconfigure(2, weight=1)
+
+        # Order frame including payment widget
+        self.orders_frame.grid_rowconfigure(0, weight=0)
+        self.orders_frame.grid_rowconfigure(1, weight=6)
+        self.orders_frame.grid_rowconfigure(2, weight =2)
+        self.orders_frame.grid_columnconfigure(0, weight=1)
+        self.orders_frame.grid_columnconfigure(1, weight=1)
+
+        self.total_order_frame.grid_rowconfigure(0, weight = 1)
+        self.total_order_frame.grid_columnconfigure(0, weight =1)
+        self.total_order_frame.grid_columnconfigure(1, weight = 1)
+        self.total_order_frame.grid_columnconfigure(2, weight =1)
+
+        self.payment_frame.grid_rowconfigure(0, weight = 1)
+        self.payment_frame.grid_columnconfigure(0, weight = 1)
+        self.payment_frame.grid_columnconfigure(1, weight = 1)
+        self.payment_frame.grid_columnconfigure(2, weight = 1)
+
+
+        # Right Side / Menu Frame
+        self.right_frame.grid_rowconfigure(0, weight=0)
+        self.right_frame.grid_rowconfigure(1, weight=0)
+        self.right_frame.grid_rowconfigure(2, weight=10)
+        self.right_frame.grid_columnconfigure(0, weight=10)
+        self.right_frame.grid_columnconfigure(1, weight=0)
+
+
+        self._title_frame.grid_columnconfigure(0, weight=1)
+        self._title_frame.grid_columnconfigure(1, weight=1)
+        self._title_frame.grid_columnconfigure(2, weight=1)
+
+        self.menu_captions_frame.grid_columnconfigure(0, weight = 1)
+        self.menu_captions_frame.grid_columnconfigure(1, weight = 1)
+        self.menu_captions_frame.grid_columnconfigure(2, weight = 1)
+        self.menu_captions_frame.grid_columnconfigure(3, weight = 1)
+        self.menu_captions_frame.grid_columnconfigure(4, weight = 1)
+
+        self.menu_items_frame.grid_columnconfigure(0, weight=1)
+        self.menu_items_frame.grid_rowconfigure(0, weight = 1)
+
+        # Widgets
+        title = headings.Heading6(self._title_frame, text="Menu Items")
+        image_caption = headings.Heading6(self.menu_captions_frame, text="Image")
+        item_name_caption = headings.Heading6(self.menu_captions_frame, text="Item Name") 
+        item_description_caption = headings.Heading6(self.menu_captions_frame, text="Description")
+        button_caption = headings.Heading6(self.menu_captions_frame, text="Buttons")
+
+        payment_button = ttk.Button(self.payment_frame, text="Pay")# , command=self.process_payment
+        clear_order_button = ttk.Button(self.payment_frame, text="Clear Order")#, command=self.clear_order
+
+
+ 
+
+        # Configure Widgets
         
-        # Banner Frame
-        self.banner_frame = ttk.Frame(self.main_frame, style="bannerframe.TFrame", name="bannerframe")
-        self.banner_frame.grid_rowconfigure(0, weight=1)
-        self.banner_frame.grid_rowconfigure(2, weight=1)
-        self.banner_frame.grid_columnconfigure(0, weight=1)
-        self.banner_frame.grid_columnconfigure(1, weight=1)
-        self.banner_frame.grid_columnconfigure(2, weight=1)
+        title.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
+        image_caption.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
+        item_name_caption.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
+        item_description_caption.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
+        button_caption.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
+
+        # Styling for frames
+        self.style.configure("left_frame.TFrame")
+        self.style.configure("right_frame.TFrame")
+        self.style.configure("orders_frame.TFrame", background = "red")
+        self.style.configure("total_order_frame.TFrame", background = "yellow")
+        self.style.configure("payment_frame.TFrame", background = "purple")
+        self.style.configure("search_frame.TFrame", background = "blue")
+        self.style.configure("menu_items_frame.TFrame")
+        self.style.configure("menu_title_frame.TFrame", borderwidth=1, relief="solid")
+        self.style.configure("menu_captions_frame.TFrame", borderwidth=1, relief="solid")
         
-        # Banner Nav Frame
-        self.navigation_frame = ttk.Frame(self.banner_frame, style="navigation.TFrame", name="navigation")
         
-        # Frame banner content
-        self.lbl_title = headings.Heading6(self.banner_frame, text="Horizon Restaurants")
-        self.lbl_branch_id = headings.TextLabel(self.banner_frame, text="")
-        
-        # Content frame to contain all navigation result elements
-        self.content_frame = ttk.Frame(self.main_frame, style="content_frame.TFrame", name="content_frame")
-        
-        # Content frame grid
-        self.content_frame.grid_rowconfigure(0, weight=0) # Title row
-        self.content_frame.grid_rowconfigure(1, weight=1)
-        self.content_frame.grid_rowconfigure(2, weight=1)
-        self.content_frame.grid_columnconfigure(0, weight=1)
-        self.content_frame.grid_columnconfigure(1, weight=1)
-        self.content_frame.grid_columnconfigure(2, weight=1)
-        
-        # Prevent the content frame from wrapping.
-        self.content_frame.grid_propagate(False)
-        
-        # self.style.configure("main_frame.TFrame", background=BACKGROUND_COLOR)
-        self.style.configure("bannerframe.TFrame", background=BACKGROUND_COLOR)
-        self.style.configure("navigation.TFrame", background=BACKGROUND_COLOR)
-        self.style.configure("content_frame.TFrame", background=BACKGROUND_COLOR)
-        self.lbl_title.label.configure(background=BACKGROUND_COLOR, fg='#FFFFFF')
-        self.lbl_branch_id.label.configure(background=BACKGROUND_COLOR, fg='#FFFFFF')
-        
-        # Display Main() frames with tkinter's grid manager
-        self._display_frames()
+        # Grid The Frames
+#----------------------------------Left Side-------------------------------------------------------------------------#
+        self.left_frame.grid(row=0, column=0, rowspan=3, sticky=tk.NSEW)
+        self.search_frame.grid(row=0, column =0, sticky=tk.NSEW)
+        self.orders_frame.grid(row=1, column =0, sticky=tk.NSEW)
+        self.total_order_frame.grid(row =1 , column =0, columnspan=2, sticky=tk.NSEW)
+        self.payment_frame.grid(row=2, column=0, columnspan=2, sticky=tk.NSEW)
+#-----------------------------------Right Side-----------------------------------------------------------------------#      
+
+        self.right_frame.grid(row=0, column=1, rowspan=3, columnspan=2, sticky=tk.NSEW)
+        self._title_frame.grid(row=0, column=0, sticky=tk.NSEW)
+        self.menu_captions_frame.grid(row=1, column = 0, sticky=tk.NSEW)
+        self.menu_items_frame.grid(row=2, column =0, sticky=tk.NSEW)
+
+        #Grid the widgets
+        payment_button.grid(row=0, column =0, sticky="NSEW")
+        clear_order_button.grid(row=0, column=1, sticky="NSEW")
+
+
+
+        title.label.grid(row=0, column=0, columnspan=3, rowspan = 1, sticky=tk.NSEW)
+        image_caption.label.grid(row=0, column=0, sticky=tk.NSEW)
+        item_name_caption.label.grid(row=0, column=1, sticky=tk.NSEW)
+        item_description_caption.label.grid(row=0, column=2, sticky=tk.NSEW)
+        button_caption.label.grid(row=0, column=3, columnspan=2, sticky=tk.NSEW)
+
+    def preload_menu_images(self):
+        menu_items = self.menu.get_menu_table()
+        self.preloaded_images = {}
+
+        for item in menu_items:
+            photo_url = item[1] 
+            if photo_url:
+                try:
+                    response = requests.get(photo_url)
+                    img_data = Image.open(BytesIO(response.content))
+                    img_data = img_data.resize((64, 64), Image.Resampling.LANCZOS)
+                    self.preloaded_images[photo_url] = ImageTk.PhotoImage(img_data)
+                except Exception as e:
+                    print(f"Error loading image from {photo_url}: {e}")
     
-    def destroy_frames(self, window: ttk.Frame | tk.Frame | tk.Widget | ttk.Widget):
-        if type(window) == list:
-            for item in window:
-                if item != self.navigation_frame:  # Exclude navigation frame from destruction
-                    item.destroy()
+
+    def create_menu_item_row(self, parent_frame, menu_item):
+        menu_item_id = [0] 
+        photo_url = menu_item[1]
+        item_name = menu_item[2]
+        description = menu_item[3]
+        price = menu_item[4]
+
+        # Frames, 
+        item_frame = ttk.Frame(parent_frame)
+        item_frame.grid(sticky=tk.EW)
+
+        for a in range(3):
+            item_frame.grid_columnconfigure(a, weight=1)
+        for b in range(5):
+            item_frame.grid_rowconfigure(b, weight=1)
+
+        img_label = None
+        photo = self.preloaded_images.get(photo_url, None)
+        if photo:
+            img_label = ttk.Label(item_frame, image=photo)
+            img_label.image = photo
         else:
-            if window != self.navigation_frame:  # Exclude navigation frame from destruction
-                window.destroy()
-            
-    def forget_frames(self, window:ttk.Frame | tk.Frame | tk.Widget | ttk.Widget):
-        # Check if the window is the banner_frame and skip removal
-        # try:
-        #     if window.winfo_name() == "bannerframe":
-        #         return
-        # except AttributeError:
-        #     pass
+            img_label = ttk.Label(item_frame, text="Error") 
 
-        if type(window) == list:
-            for item in window:
-                item.grid_forget()
-        else:
-            window.grid_forget()
-            
-    def _display_frames(self):
-        """ Displays the top level frame for any children to be displayed on. """
-        
-        # Display Banner Frame
-        self.banner_frame.grid(row=0, column=0, columnspan=3, padx=self.padx, pady=self.pady, sticky=tk.EW)
-        
-        # Display Banner Content
-        self.lbl_title.label.grid(row=0, column=0, sticky=tk.W)
-        self.lbl_branch_id.label.grid(row=1, column=0, sticky=tk.W)
-        
-        # Display Navigation
-        self.navigation_frame.grid(row=0, column=1, columnspan=2, rowspan=2, padx=3, pady=12, sticky=tk.NSEW)
-        
-        # Display Main Content Frame
-        self.content_frame.grid(row=1, column=0, columnspan=3, padx=self.padx, pady=self.pady, sticky=tk.NSEW)
+        # Widgets
+        name_label = ttk.Label(item_frame, text=item_name, anchor="w", justify="center")
+        desc_label = ttk.Label(item_frame, text=description, font=('Helvetica', 8), anchor="w", justify="center")
+        price_label = ttk.Label(item_frame, text=f"£{price}", anchor="w", justify="center")
+        allergens_button = ttk.Button(item_frame, text="View Allergens")
+        order_button = ttk.Button(item_frame, text="Add to Order", command=lambda: self.add_to_order(item_name, price, menu_item_id))
+
+        # Grid Widgets        
+        img_label.grid(row=0, rowspan=3, column=0, sticky="NSEW")
+        name_label.grid(row=1, column=1, sticky="NSEW")
+        desc_label.grid(row=1, column=2, sticky="NSEW")
+        price_label.grid(row=2, column=3, columnspan=2, sticky="NSEW")
+        allergens_button.grid(row=0, rowspan=2, column=3, sticky="NSEW")
+        order_button.grid(row=0, rowspan=2, column=4, sticky="NSEW")
+
+
+    def display_menu_items(self):
+        menu_items = self.menu.get_all_menu_items()  # Fetch all menu items at once
+        for menu_item in menu_items:
+            self.create_menu_item_row(self.menu_items_frame, menu_item)
+
+
+    def add_to_order(self, item_name, price, menu_item_id):
+        order_item_text = f"{item_name} - £{price}"
+        order_item_label = ttk.Label(self.total_order_frame, text=order_item_text)
+        order_item_label.menu_item_id = menu_item_id  # Storing the menu item id for later use
+        order_item_label.pack()
+#--------------------------------------------------------------------------------------------#
+    # def process_payment(self):
+    # # Extract items from total_order_frame and prepare data for insertion
+    # order_items = []  # This will be a list of tuples or a similar structure
+    # for widget in self.total_order_frame.winfo_children():
+    #     if isinstance(widget, ttk.Label):
+    #         item_text = widget.cget("text")
+    #         # Extract item_name and price from item_text, then append to order_items
+    #         # ...
+
+    # # Assuming you have a function in your Database class to insert orders
+    # database.insert_orders(order_items)
+
+    # # Clear the order frame after payment
+    # self.clear_order()
     
-    def create_navbar(self, branch_role):
-        """Creates a navbar from a list of button names. """
-        nav_buttons = []
-        nav_button_obj_list = []
-        
-        match(branch_role):
-            case 1: # Staff
-                nav_buttons = ["Menu", "Logout"]
-            case 2: # Chef
-                nav_buttons = ["Menu", "Kitchen", "Logout"]
-            case 3: # Manager
-                nav_buttons = ["Menu", "Reservations", "Kitchen", "Reports", "Logout"]
-            case 4: # Admin
-                nav_buttons = ["Menu", "Reservations", "Kitchen", "Reports", "User Management", "Logout"]
-            case 5: # HR Director
-                nav_buttons = ["Reports", "Logout"]
-            case _: # Unknown
-                nav_buttons = ["Menu", "Logout"]
-                
-        # Remove navbar buttons if there is only logout and the existing page/frame.
-        # nav_buttons_length = len(nav_buttons)    
-        # if nav_buttons_length == 2:
-        #     del nav_buttons[nav_buttons_length-2]
-        
-        # Create the button objects using the configured navbar list
-        for i in range(len(nav_buttons)):
-            button_name = nav_buttons[i].lower()
-            button = tk.Button(
-                self.navigation_frame,
-                text=nav_buttons[i],
-                # width=100 // nav_buttons_length,
-                width=100 // len(nav_buttons),
-                name=button_name,
-                padx=self.padx,
-                pady=self.pady
-            )
-            nav_button_obj_list.append(button)
-            
-        # Check if the logout button is in button name and make it a 'danger' color
-        # This gives UX a peace of mind.
-        if "logout" == nav_buttons[i].lower():
-            button.configure(background='#FF5252', activebackground='#FF5252')
+    # def clear_order(self):
+    # for widget in self.total_order_frame.winfo_children():
+    #     widget.destroy()
 
-        return nav_button_obj_list
-        
-    def del_navbar_button(self, nav_button:str):
-        """ Deletes a navigation button from a button set via string type. """
+    
+    
+    
+    
+    
+    
+    
+    def get_menu(self):
+        """ Gets the menu and returns all items. """
         return
     
-    def add_navbar_button(self, nav_button:dict):
-        """Add a new or previously existing navigation button via hashmap."""
+    def get_item(self, item_name:str):
+        """ Get an items data from menu. """
         return
     
-    def display_navbar_buttons(self, nav_buttons:list):
-        """ Display the top level frame navigation bar based on the hierarchical priority of the user. """
-                
-        self.destroy_frames(self.navigation_frame)
-        # Get the child of the main frame
-        content_frame_name = self.content_frame.winfo_name()
-        content_frame_children = self.content_frame.winfo_children()
-        
-        self.navigation_frame.grid_rowconfigure(0, weight=1)
-        self.navigation_frame.grid_columnconfigure(0, weight=1)
-        
-        # If 0, then frame is empty, resort to default nav.
-        # The other option is to get next content frame children as a baseline
-        # so we know which navigation items to display.
-        # for i in range(len(nav_buttons)):
-            
-        #         # If empty, create default navbar based on user access.
-        #         if len(content_frame_children) == 0:
-        #             self.style.configure(nav_buttons[i].winfo_name())
-        #             nav_buttons[i].grid(row=0, column=i, sticky=tk.NS+tk.E)
-        
-        
-        # ---------------------------------------------------------------------------------#
-        # Remove later. This is a test to see if the navbar displays after updating a frame.
-        for i in range(len(nav_buttons)):
-            self.style.configure(nav_buttons[i].winfo_name())
-            nav_buttons[i].grid(row=0, column=i, sticky=tk.NS+tk.E)
-        # ---------------------------------------------------------------------------------#
-
-        
-    def get_current_frames(self):
-        """Gets all the current active frames of a paginated section. """
-        
-        return self.content_frame.winfo_children()
-
-    
-class Application(object):
-    def __init__(self, **args):
-        
-        # Configure the master interface
-        self.main = Interface(**args)
-        self.main.master.propagate(False)
-        self.main.master.configure(width=INITIAL_WIDTH, height=INITIAL_HEIGHT, bg=BACKGROUND_COLOR)
-        self.main.master.minsize(width=INITIAL_WIDTH, height=INITIAL_HEIGHT)
-        
-        # Allow the application to become expandable on the top level.
-        self.main.master.grid_rowconfigure(0, weight=1)
-        self.main.master.grid_columnconfigure(0, weight=1)
-        
-        # Add styling
-        self.style = ttk.Style()
-        
-        # Add a main frame to master
-        main_frame = ttk.Frame(self.main.master, style='main_frame.TFrame', name="main_frame", width=self.main.master.winfo_reqwidth(), height=self.main.master.winfo_reqheight())
-        main_frame.grid(row=0, column=0, sticky=tk.NSEW)      
-        
-        # Main Window
-        self.main_window = Main(main_frame)
-        
-        # Sub Windows
-        self.login_interface = login.Login(self.main_window)
-        self.menu_interface = menu.Menu(self.main_window)
-        self.home_frame = ttk.Frame(self.main_window.content_frame, style="home_frame.TFrame", name="home_frame")
-        self.home_welcome = headings.Heading1(self.home_frame)
-        self.home_info = headings.TextLabel(self.home_frame)
-        self.kitchen_interface = kitchen.Kitchen(self.main_window)
-        
-        # Lowest level of staff
-        self.staff = login.Staff()
-        
-        self.login_buttons = self.login_interface.create_login_buttons_2d_list()
-        self.display_login()
-        
-    def display_home(self):
-        """Display a template home page for the user after login. """
-        
-        self.style.configure("home_frame.TFrame", background=BACKGROUND_COLOR)
-        self.home_frame.grid_rowconfigure(0, weight=1)
-        self.home_frame.grid_rowconfigure(1, weight=1)
-        self.home_frame.grid_columnconfigure(0, weight=1)
-        # self.home_frame.grid_columnconfigure(1, weight=1)
-        self.home_frame.grid(row=0, column=1, rowspan=3, sticky=tk.NSEW)
-        
-        # Home label heading
-        self.home_welcome.label.configure(bg=BACKGROUND_COLOR, fg='#FFFFFF', text=f"Welcome {self.staff.first_name.get()}!")
-        self.home_welcome.label.grid(row=0, column=0, sticky=tk.S)
-
-        # Home label staff id
-        self.home_info.label.configure(bg=BACKGROUND_COLOR, fg='#FFFFFF', text=f"POS Management System. \nYour Personal Staff ID: {self.staff.staff_id.get()}.")
-        self.home_info.label.grid(row=1, column=0, sticky=tk.N)
-        
-    def display_navbar(self):
-        # Create and display navbar
-        self.navbar = self.main_window.create_navbar(branch_role=self.staff.branch_role.get())
-        self.main_window.display_navbar_buttons(nav_buttons=self.navbar)
-        
-        # Logout button
-        logout_button_int = -1
-        self.navbar[logout_button_int].bind("<Button>", func=lambda _: (
-            # Forget (all) previous frames to display a new frame object.
-            self.main_window.forget_frames(self.main_window.content_frame.winfo_children()),
-            self.main_window.forget_frames(self.main_window.navigation_frame.winfo_children()),
-            
-            # Empty branch ID on logout
-            self.main_window.lbl_branch_id.label.configure(text = ""),
-            
-            # Display the login page
-            self.display_login()
-            )
-        )
-        
-        # Bind every navbar button to their respective display function.
-        for button in range(len(self.navbar)+logout_button_int):
-            button_name = self.navbar[button].cget('text').lower().replace(' ', '_')            
-            display_page = getattr(self, f"display_{button_name}")
-            self.navbar[button].bind("<Button>", func=lambda _, page=display_page: ( 
-                self.main_window.forget_frames(self.main_window.content_frame.winfo_children()),
-                page(),
-                
-                # Show which frames are currently active on the screen
-                # print("\n***ACTIVE FRAMES ***"),
-                # print(frame.winfo_ismapped() for frame in self.main_window.main_frame.winfo_children()),
-            ))
-        
-    def display_login(self):
-        """Top most level function to display the login page. """
-        
-        def _create_btn_callbacks():
-            """Internal nested callback function. """
-            for row in range(len(self.login_buttons)):
-                for col in range(len(self.login_buttons[row])):
-                    if self.login_interface.buttons[row][col].cget('text') != "Login":
-                        if self.login_interface.buttons[row][col].cget('text') == "<<":
-                            self.login_interface.buttons[row][col].configure(
-                                command=lambda: self.login_interface._input_box.on_tbx_delete(self.login_interface._input_box.input_box)
-                            )
-                        else:
-                            self.login_interface.buttons[row][col].configure(
-                                command=lambda x=str(self.login_interface.buttons[row][col].cget("text")): self.login_interface._input_box.on_tbx_insert(self.login_interface._input_box.input_box, x)
-                            )
-                        
-                    elif self.login_interface.buttons[row][col].cget('text') == "Login":
-                        self.login_interface.buttons[row][col].configure(
-                            command=lambda: (
-                                # Configure staff object and update branch id.
-                                self.staff.init_staff(staff_id = self.login_interface._input_box.input_box.get()),
-                                self.main_window.lbl_branch_id.label.configure(text=f"HR Branch ID: {self.staff.branch_id.get()}"),
-                                self.login_interface._input_box.on_tbx_delete(self.login_interface._input_box.input_box),
-                                
-                                # Display the home page + navbar if accessed is granted other return to login page.
-                                ((self.display_navbar(),self.display_home()) 
-                                if self.login_interface.check_access_rights(branch_role=self.staff.branch_role.get(), staff_id=self.staff.staff_id.get()) == True else self.display_login())
-                            )
-                            if self.login_interface.login(staff_id=self.login_interface._input_box.input_box.get()) == True else False
-                        )
-
-            self.login_interface.display_frames()  
-            self.login_interface.display_login_buttons(self.login_buttons)
-    
-        try:
-            _create_btn_callbacks()
-            
-        except AttributeError:
-            # If this error is raised it means the program cannot find the created button objects
-            # therefore it resorted back to the default buttons names list causing tkinter attribute error.
-            # This is easily fixed by catching the error and re-intialising self.login_buttons to its original state.
-            self.login_buttons = self.login_interface.create_login_buttons_2d_list()
-            _create_btn_callbacks()
-            
-    def display_menu(self):
-        """Top most level function to display the menu page. """
-        
-        
-        # Create a new Login instance in the case that the previous has been destroyed, forgotten, or removed by tkinter.
-        self.login_interface = login.Login(self.main_window)
-        # Display the menu frames
-        self.menu_interface.display_frames()
-        
-    def display_reservations(self):
+    def get_item_description(self, item_name:str):
+        """ Get the description of a menu item. """
         return
     
-    def display_kitchen(self):
-        """Top most level function to display the kitchen/order overview page. """
-        
-        # Delete pre-existing orders
-        self.kitchen_interface.unpopulate_orders_display()
-        
-        # Create a new kitchen interface.
-        order_management_buttons = self.kitchen_interface.create_management_buttons()
-        self.kitchen_interface.display_management_buttons(order_management_buttons)
-        self.kitchen_interface.create_dynamic_headings()
-        self.kitchen_interface.display_frames()
-        
-        
+    def get_description_allergens(self):
+        """ Get the allgerns of an item. """
         return
     
-    def display_reports(self):
-        # self.reports_interface.btn_dict.get("KEY").bind("<Button>", func=lambda _: ((cmd1), (cmd2), if x == y else ""))
+    def get_selected_food_items(self, **args) -> dict: #search for itemsWWW
         return
     
-    def display_user_management(self):
+    def suggest_food_items(self):
+        """ Arbitrarily suggest food to purchase. """
+        return
+    
+    def mark_items_as_unavailable(self):
+        """ Update the menu item as unavailable. """
+        return
+    
+    def check_item_availability(self, item_name:str) -> int:
+        """ Check the availablity of a menu item. """
+        return self._inventory.check_inventory_stock(item_name)
+    
+    def _set_item(self, item_name:str, description:str, photo_url:str = None):
+        """ Private method for inserting a menu item. """
+        return
+    
+    def _set_item_description(self, description:str):
+        """ Private method for inserting a menu item description. """
+        return
+    
+    def _set_item_price(self, price:float):
+        """ Private method for inserting a menu item price. """
+        return
+    
+    def _delete_item(self, item_name:str):
+        """ Private method for deleting a menu item. """
+        return
+    
+    def _set_category(self, category_name:str):
+        """ Private method for inserting a menu item category. """
+        return
+    
+    def _update_category(self, category_name:str):
+        """ Private method for updating a menu item category. """
         return
 
-
-if __name__ == '__main__':
-    
-    # Initialise the entire application and mapped settings
-    app = Application(**app_settings)
-    
-    # Add any new settings after initialisation like below:
-    # main_window.settings['SETTING_NAME'] = SETTING_VALUE
-    
-    # Run the tkinter event loop to control continuity
-    app.main.master.mainloop()
+    def _delete_category(self, category_name:str):
+        """ Private method for deleting a menu item category. """
+        return
