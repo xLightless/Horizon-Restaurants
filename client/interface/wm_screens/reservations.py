@@ -7,7 +7,7 @@ from server.sql.database import database
 
 class ReservationBox:
     def __init__(self, parent, staff_id):
-        self._parent = parent
+        self._parent = parent 
         self._staff_id = staff_id
 
         # making and arranging GUI display
