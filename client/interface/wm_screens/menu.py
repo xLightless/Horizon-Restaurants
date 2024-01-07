@@ -189,7 +189,7 @@ class Menu(object):
                     print(f"Error loading image from {photo_url}: {e}")
 
     def show_allergens_popup(self, item_name):
-        additional_items = self.menu.get_additional_items(item_name)
+        additional_items = self.menu.get_menu_allergen(item_name)
 
         if additional_items:
             allergen_info = "Allergen Name: {}\nAllergen ID: {}".format(
