@@ -16,6 +16,7 @@ from io import BytesIO
 import tkinter.ttk as ttk
 import tkinter as tk
 import datetime
+from tkinter.messagebox import showinfo
 
 class Menu(object):
     def __init__(self, parent):
@@ -186,7 +187,19 @@ class Menu(object):
                     self.preloaded_images[photo_url] = ImageTk.PhotoImage(img_data)
                 except Exception as e:
                     print(f"Error loading image from {photo_url}: {e}")
-    
+
+    def show_allergens_popup(self, item_name):
+        additional_items = self.menu.get_additional_items(item_name)
+
+        if additional_items:
+            allergen_info = "Allergen Name: {}\nAllergen ID: {}".format(
+                additional_items['allergen_name'], additional_items['allergen_id']
+            )
+            # Use showinfo directly to display allergen information
+            showinfo("Allergen Information for {}".format(item_name), allergen_info)
+        else:
+            # If no additional items are found, display an information message using showinfo
+            showinfo("No Allergens", "{} has no additional items (allergens)".format(item_name))
 
     def create_menu_item_row(self, parent_frame, menu_item):
         menu_item_id = menu_item[0]
@@ -216,7 +229,7 @@ class Menu(object):
         name_label = ttk.Label(item_frame, text=item_name, anchor="w", justify="center")
         desc_label = ttk.Label(item_frame, text=description, font=('Helvetica', 8), anchor="w", justify="center")
         price_label = ttk.Label(item_frame, text=f"£{price}", anchor="w", justify="center")
-        allergens_button = ttk.Button(item_frame, text="View Allergens")
+        allergens_button = ttk.Button(item_frame, text="View Allergens", command=lambda item_name=item_name: self.show_allergens_popup(item_name))
         order_button = ttk.Button(item_frame, text="Add to Order", command=lambda m=menu_item_id: self.add_to_order(item_name, price, m))
 
         # Grid Widgets        
