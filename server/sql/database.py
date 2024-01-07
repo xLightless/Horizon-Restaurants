@@ -454,7 +454,7 @@ class SQLMenu(object):
         data = data.loc[:, columns]
         return data
 
-    def get_additional_items(self, item_name):
+    def get_menu_allergen(self, item_name):
         try:
             
             menu_item_record = self.database.get_table_value_record("menu_items", "item_name", item_name)
