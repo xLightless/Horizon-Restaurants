@@ -453,6 +453,32 @@ class SQLMenu(object):
         columns = ["item_name", "description", "price"]
         data = data.loc[:, columns]
         return data
+
+    def get_additional_items(self, item_name):
+        try:
+            
+            menu_item_record = self.database.get_table_value_record("menu_items", "item_name", item_name)
+            menu_item_id = menu_item_record[0] if menu_item_record else None
+
+            if menu_item_id:
+                
+                allergen_record = self.database.get_table_value_record("menu_allergens", "menu_item_idx", menu_item_id)
+                allergen_id = allergen_record[0] if allergen_record else None
+
+                if allergen_id:
+                   
+                    allergen_name_record = self.database.get_table_value_record("allergens", "allergen_id", allergen_id)
+                    allergen_name = allergen_name_record[1] if allergen_name_record else None
+
+                    if allergen_name:
+                        return {
+                            'menu_item_id': menu_item_id,
+                            'allergen_id': allergen_id,
+                            'allergen_name': allergen_name
+                        }
+        except Exception as e:
+            print(f"Error in get_additional_items: {str(e)}")
+        return None
         
         
 class SQLKitchenOrders(object):
