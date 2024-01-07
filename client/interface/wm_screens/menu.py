@@ -15,6 +15,7 @@ import requests
 from io import BytesIO
 import tkinter.ttk as ttk
 import tkinter as tk
+import datetime
 
 class Menu(object):
     def __init__(self, parent):
@@ -118,6 +119,8 @@ class Menu(object):
         self.order_scrollbar = ttk.Scrollbar(self.total_order_frame, orient="vertical", command=self.order_treeview.yview)
         self.order_treeview.configure(yscrollcommand=self.order_scrollbar.set)
         self.order_treeview.bind("<Double-1>", self.on_treeview_item_click) 
+        self.checkbox_var = tk.IntVar() # Checks the state, where clicked or not
+        self.confirm_checkbox = ttk.Checkbutton(self.payment_frame, text="Discount", variable=self.checkbox_var)
 
 
         # Configure Widgets
@@ -161,8 +164,7 @@ class Menu(object):
         clear_order_button.grid(row=0, column=1, sticky="NSEW")
         self.order_treeview.grid(row=0, column=0, sticky="nsew", padx=(10, 0), pady=10)
         self.order_scrollbar.grid(row=0, column=1, sticky="ns", pady=10)
-
-
+        self.confirm_checkbox.grid(row=0, column=2, sticky="NSEW")
 
         title.label.grid(row=0, column=0, columnspan=3, rowspan = 1, sticky=tk.NSEW)
         image_caption.label.grid(row=0, column=0, sticky=tk.NSEW)
@@ -187,7 +189,7 @@ class Menu(object):
     
 
     def create_menu_item_row(self, parent_frame, menu_item):
-        menu_item_id = [0]
+        menu_item_id = menu_item[0]
         photo_url = menu_item[1]
         item_name = menu_item[2]
         description = menu_item[3]
@@ -215,7 +217,7 @@ class Menu(object):
         desc_label = ttk.Label(item_frame, text=description, font=('Helvetica', 8), anchor="w", justify="center")
         price_label = ttk.Label(item_frame, text=f"£{price}", anchor="w", justify="center")
         allergens_button = ttk.Button(item_frame, text="View Allergens")
-        order_button = ttk.Button(item_frame, text="Add to Order", command=lambda: self.add_to_order(item_name, price, menu_item_id))
+        order_button = ttk.Button(item_frame, text="Add to Order", command=lambda m=menu_item_id: self.add_to_order(item_name, price, m))
 
         # Grid Widgets        
         img_label.grid(row=0, rowspan=3, column=0, sticky="NSEW")
@@ -237,7 +239,7 @@ class Menu(object):
 
         self.order_treeview.insert("", "end", iid=order_item_id, values=(item_name, f"£{price}"))
         self.order_items[order_item_id] = {
-            "menu_item_id": menu_item_id,
+            "menu_item_id": menu_item_id,  # No longer a list, just a single ID
             "item_name": item_name,
             "price": price
         }
@@ -253,18 +255,25 @@ class Menu(object):
                 del self.order_items[internal_id]
     
     def process_payment(self):
+        current_date = datetime.date.today().strftime("%Y-%m-%d")
+        current_time = datetime.datetime.now().strftime("%H:%M:%S")
+
         for order_item_id, item_details in self.order_items.items():
-
             menu_item_id = item_details["menu_item_id"]
-            item_name = item_details["item_name"]
-            price = item_details["price"]
+            price = str(item_details["price"])
 
-            #Logic to calculate price etc--------------------------
+            if self.checkbox_var.get() == 1: #Checks if "Discount" checkbox is clicked as yes.
+                discount = "STAFF20"
+                price = str(float(price) * 0.8)
+            else:
+                discount = "NO_DISCOUNT"
+
+            self.menu.insert_new_order(current_date, current_time, price, discount, menu_item_id, "PAID")
 
         self.clear_order()
 
-    def clear_order(self):
-        self.order_treeview.delete(*self.order_treeview.get_children())
+    def clear_order(self): #Gets and clears all inputs in treeview.
+        self.order_treeview.delete(*self.order_treeview.get_children()) 
         self.order_items.clear()
         self.item_counter = 0
 #--------------------------------------------------------------------------------------------#
