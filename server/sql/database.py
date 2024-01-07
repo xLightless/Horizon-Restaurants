@@ -1,5 +1,6 @@
 import mysql.connector
 import warnings
+import random
 import pandas as pd
 
 # Disables pandas sql warning
@@ -525,7 +526,7 @@ class SQLReservations(object):
     #     except Exception as e:
     #         print(f"Error in deleting reservation: {str(e)}")
     
-    def create_reservation(self, date, time, table_number, first_name, last_name, phone_number, allergen_id):
+    def create_reservation(self, date, time, table_number, first_name, last_name, phone_number, allergen_info):
         """ Creates a reservation for a customer along with their allergens and info.
 
         Args:
@@ -535,7 +536,7 @@ class SQLReservations(object):
             first_name (_type_): customer first name.
             last_name (_type_): customer last name.
             phone_number (_type_): customer phone number.
-            allergen_id (_type_): allergen id.
+            allergen_info (_type_): allergen info.
         """
         
         reservations = self.get_reservations()
@@ -543,11 +544,17 @@ class SQLReservations(object):
         reservation_id = len_reservations + 1
         database.set_table_record("reservations", reservation_id, values=(date, time, table_number))
         
+        #get row number and 
         customers = self.get_customers()
         len_customers = len(customers['customer_id'])
-        customer_id = len_customers + 1
-        database.set_table_record("customers", customer_id, values=(first_name, last_name, phone_number, allergen_id))
-    
+        customer_id = random.randint(1, 1000000)
+        database.set_table_record("customers", customer_id, values=(first_name, last_name, phone_number, allergen_info))
+        
+        #insert kitchen id and reservation id into kitchen table
+        kitchen = SQLKitchenOrders()
+        kitchen_id = len(kitchen.get_orders()['order_id']) + 1
+        database.set_table_record("kitchen", kitchen_id, values=(reservation_id,))
+        
     def delete_reservation(self, reservation_id):
         """ This function deletes a row in reservations of the given parameter. """
         
