@@ -31,7 +31,7 @@ class Database(object):
         )
         
         self.cursor = self.__db.cursor()
-        
+            
     def get_table(self, table:str, dataframe:bool = False):
         """ Gets the raw table of a database. Can be used in polymorphism
 
@@ -552,8 +552,6 @@ class SQLReservations(object):
         """ This function deletes a row in reservations of the given parameter. """
         
         database.del_table_record("reservations", "reservation_id", value=reservation_id)
-    
-    
     
 class SQLBranch(object):
     def get_branch_cities(self):

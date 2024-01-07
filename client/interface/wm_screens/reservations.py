@@ -7,9 +7,9 @@ from server.sql.database import SQLReservations
 import datetime
 import random
 
-class Reservations(object):
+class Reservations:
     def __init__(self, parent):
-        self._parent = parent 
+        self._parent = parent
         self.reservations = SQLReservations()
 
         # making and arranging GUI display
@@ -78,7 +78,13 @@ class Reservations(object):
 
         # Generate a random Table Number (assuming the range is from 1 to 20)
         table_number = str(random.randint(1, 20))
+        
+        # Generate automatic Date and Time
+        current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        current_time = datetime.datetime.now().strftime("%H:%M")
 
+        # Generate a random Table Number (assuming the range is from 1 to 20)
+        table_number = str(random.randint(1, 20))
         # validate non-empty inputs
         if not customer_name:
             messagebox.showerror("Error", "Customer Name must be filled")
@@ -125,4 +131,6 @@ class Reservations(object):
 
         except InvalidCredentialsError as e:
             # show a error message if there's a problem with deleting  reservation
+
+            messagebox.showerror("Error", f"Error in deleting the reservation: {str(e)}")
             messagebox.showerror("Error", f"Error in deleting the reservation: {str(e)}")
