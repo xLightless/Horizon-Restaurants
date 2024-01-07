@@ -479,6 +479,28 @@ class SQLMenu(object):
         except Exception as e:
             print(f"Error in get_additional_items: {str(e)}")
         return None
+    def count_menu_table_rows(self):
+
+        total_items = database.count_table_rows("menu_items")
+        return total_items
+
+    def get_menu_item_record(self, row:int, dataframe: bool = False):
+        return self.database.get_table_record("menu_items", row, dataframe)
+
+    def get_all_menu_items(self):
+        """ Fetch all menu items at once """
+        return self.database.get_table("menu_items")
+
+    def insert_new_order(self, order_date, order_time, order_price, order_discount, menu_item_id, order_status):
+        current_max_order_id = self.database.count_table_rows("orders")
+        new_order_id = current_max_order_id + 1
+        print("Attempting to insert order with menu_item_id:", menu_item_id)
+
+        values = (order_date, order_time, order_price, order_discount, order_status, str(menu_item_id))
+
+        self.database.set_table_record("orders", new_order_id, values)
+
+        return new_order_id
         
         
 class SQLKitchenOrders(object):
