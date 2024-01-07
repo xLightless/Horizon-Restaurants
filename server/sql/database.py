@@ -436,8 +436,6 @@ class SQLMenu(object):
         
         
 class SQLKitchenOrders(object):
-    
-        
     def get_displayed_orders(self):
         # If this number is set then the reservation has no table.
         NO_TABLE_NUMBER = 999
@@ -470,18 +468,24 @@ class SQLKitchenOrders(object):
         orders = database.get_table_records_of_value("orders", "order_status", "PAID", True)
         return orders      
      
-    def cancel_kitchen_order(self, primary_key_column_name, primary_key):
+    def cancel_kitchen_order(self, order_id_pk):
         """Updates an order to cancelled due to it being removed by kitchen staff. """
         
-        database.update_table_record_value("orders", "order_status", "CANCELLED", primary_key_column_name, primary_key)
-     
-    def get_bulk_orders(self):
-        return
+        # Updates the order to cancelled.
+        database.update_table_record_value("orders", "order_status", "CANCELLED", "order_id", order_id_pk)
     
-    def mark_order_as_ready(self,  primary_key_column_name, primary_key):
+    def mark_order_as_ready(self, order_primary_key, serve_date, serve_time):
         """Updates an order to 'mark as ready' by kitchen staff. """
         
-        database.update_table_record_value("orders", "order_status", "COMPLETED", primary_key_column_name, primary_key)
+        # Get the order id via kitchen table
+        kitchen_order = database.get_table_value_record("kitchen", "order_id", order_primary_key)
+        record_primary_key = kitchen_order[0]
+        
+        # If a kitchen/order record exists, update the order as completed along with a serve datetime.
+        if type(record_primary_key) == int:
+            database.update_table_record_value("kitchen", "serve_date", value=serve_date, pk_column_name="kitchen_id", pk_id=record_primary_key)
+            database.update_table_record_value("kitchen", "serve_time", value=serve_time, pk_column_name="kitchen_id", pk_id=record_primary_key)
+            database.update_table_record_value("orders", "order_status", "COMPLETED", "order_id", order_primary_key)
     
     def get_sequential_orders(self, table_number:int):
         return
@@ -494,5 +498,63 @@ class SQLKitchenOrders(object):
     
 
 class SQLReservations(object):
+    
+    def get_customers(self):
+        return database.get_table("customer", True)
+    
     def get_reservations(self):
         return database.get_table("reservations", True)
+    
+    # def make_reservation(self, date, time, table_number, branch_id, customer_id):
+    #     """ Make a new reservation """
+    #     try:
+    #         query = "INSERT INTO reservations (date, time, table_number, branch_id, customer_id) VALUES (%s, %s, %s, %s, %s)"
+    #         values = (date, time, table_number, branch_id, customer_id)
+    #         self.cursor.execute(query, values)
+    #         self.__db.commit()
+    #     except Exception as e:
+    #         print(f"Error in making reservation: {str(e)}")
+
+    # def delete_reservation(self, reservation_id):
+    #     """ Delete a reservation """
+    #     try:
+    #         query = "DELETE FROM reservations WHERE reservation_id = %s"
+    #         values = (reservation_id,)
+    #         self.cursor.execute(query, values)
+    #         self.__db.commit()
+    #     except Exception as e:
+    #         print(f"Error in deleting reservation: {str(e)}")
+    
+    def create_reservation(self, date, time, table_number, first_name, last_name, phone_number, allergen_id):
+        """ Creates a reservation for a customer along with their allergens and info.
+
+        Args:
+            date (_type_): YYYY-MM-DD
+            time (_type_): HH:MM:SS
+            table_number (_type_): the table number.
+            first_name (_type_): customer first name.
+            last_name (_type_): customer last name.
+            phone_number (_type_): customer phone number.
+            allergen_id (_type_): allergen id.
+        """
+        
+        reservations = self.get_reservations()
+        len_reservations = len(reservations['reservation_id'])
+        reservation_id = len_reservations + 1
+        database.set_table_record("reservations", reservation_id, values=(date, time, table_number))
+        
+        customers = self.get_customers()
+        len_customers = len(customers['customer_id'])
+        customer_id = len_customers + 1
+        database.set_table_record("customers", customer_id, values=(first_name, last_name, phone_number, allergen_id))
+    
+    def delete_reservation(self, reservation_id):
+        """ This function deletes a row in reservations of the given parameter. """
+        
+        database.del_table_record("reservations", "reservation_id", value=reservation_id)
+    
+    
+    
+class SQLBranch(object):
+    def get_branch_cities(self):
+        return database.get_table("branch_cities", True)

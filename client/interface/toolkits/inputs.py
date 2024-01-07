@@ -85,6 +85,39 @@ class InputBox(Characters):
         return len(tbx_input.get())
 
         
+# class InputGridBox(Characters):
+#     def __init__(self, interface, family="Arial", label_text="ENTRY_BOX: ", x=0, y=0, tbx_border_size = 1, tbx_relief=SOLID, tbx_width=20, propagate=False, state='normal'):
+#         """Pythonic version of HTML tag <input> for Tkinter. """
+        
+#         super().__init__(family)
+#         self.__subinterface = Frame(interface, padx=self.padx, pady=self.pady)
+        
+#         self.x = x + (self.padx*2)
+#         self.y = y + (self.pady*2)
+        
+#         self.tkfont = Font(root=interface, **self.font_style)
+#         self.input_box_label = Label(master=self.__subinterface, text=label_text, font=self.tkfont) 
+#         self.input_box = Entry(self.__subinterface, font=self.tkfont, bd=tbx_border_size, relief=tbx_relief, width=tbx_width, justify=LEFT, state=state)
+
+#     def set_input_state(self, state):
+#         """Change the input state of the focused object. """
+        
+#         if state == DISABLED:
+#             return self.input_box.config(state=state, disabledbackground="#dddddd") 
+#         return self.input_box.config(state=NORMAL)
+
+#     def on_tbx_insert(self, tbx_input, args):
+#         tbx_input.configure(state="normal")
+#         tbx_input.insert(END, args)
+#         tbx_input.configure(state="readonly")
+        
+#     def on_tbx_delete(self, tbx_input):
+#         tbx_input.configure(state="normal")
+#         tbx_input.delete(0, END)
+#         tbx_input.configure(state="readonly")
+        
+#     def get_tbx_length(self, tbx_input):
+#         return len(tbx_input.get())
 
 class ButtonBox(Characters):
     def __init__(self, interface, buttons:list = [list], button_size_multiplier:int = 4):

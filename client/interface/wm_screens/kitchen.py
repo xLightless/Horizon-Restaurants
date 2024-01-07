@@ -1,13 +1,14 @@
 from server.sql.database import database
 from client.interface.toolkits import inputs, headings
-# from client.interface.wm_screens import reservations, menu
 from client.settings import BACKGROUND_COLOR
 from server.sql.database import database, SQLKitchenOrders, SQLMenu, SQLReservations
 from tkinter import messagebox
+from datetime import datetime
 
 import tkinter as tk
 import tkinter.ttk as ttk
 import pandas as pd
+
 
 class Kitchen(object):
     def __init__(self, parent):
@@ -118,22 +119,37 @@ class Kitchen(object):
         row = self.treeview_orders.focus()
         return row
         
+    def get_order_selection_time(self):
+        """Get the serve_date and serve_time using local datetime. """
+        
+        date_time = datetime.now()
+        date = date_time.date().strftime("%Y:%m:%d").replace(':', '-')
+        time = date_time.time().strftime("%H:%M:%S")
+        return date, time
+        
+        
     def update_mark_as_ready_button(self, buttons):
         """Update cancellation of orders per selection. """
+        
+        # Get the date and time for order row
+        date, time = self.get_order_selection_time()
+        
 
-        # data = self.treeview_orders.item(self.get_selected_row())['values']
+        # Bind a command to the button to update its usage per new selection by the user.
         buttons.bind("<Button>", func=lambda _, data=self.treeview_orders.item(self.get_selected_row())['values'], row_id=self.treeview_orders.selection()[0]: (
             
             # Update on the screen the order has been cancelled.
             self.treeview_orders.item(row_id, values=(data[0], "COMPLETED", data[2], int(data[3]))),
             
             # Update the database to cancel the item.
-            self.kitchen_orders.mark_order_as_ready(primary_key_column_name="order_id", primary_key=data[0])
+            self.kitchen_orders.mark_order_as_ready(order_primary_key=data[0], serve_date=date, serve_time=time)
         ))
+        
+        
         
     def update_cancel_order_button(self, buttons):
         """Update cancellation of orders per selection. """
-
+        
         # Bind a command to the button to update its usage per new selection by the user.
         buttons.bind("<Button>", func=lambda _, data=self.treeview_orders.item(self.get_selected_row())['values'], row_id=self.treeview_orders.selection()[0]: (
             
@@ -141,7 +157,7 @@ class Kitchen(object):
             self.treeview_orders.item(row_id, values=(data[0], "CANCELLED", data[2], int(data[3]))),
             
             # Update the database to cancel the item.
-            self.kitchen_orders.cancel_kitchen_order(primary_key_column_name="order_id", primary_key=data[0])
+            self.kitchen_orders.cancel_kitchen_order(order_id_pk=data[0])
         ))
         
     def update_bulk_orders_button(self, buttons):
@@ -152,7 +168,7 @@ class Kitchen(object):
         kitchen_orders = self.kitchen_orders.get_displayed_orders()
         
         item_name_bulk_total = len(kitchen_orders.loc[kitchen_orders['item_name'] == item_name])
-        buttons.bind("<Button>", func=lambda _: (
+        buttons.bind("<ButtonRelease>", func=lambda _: (
             messagebox.showinfo(
                 "View Kitchen Orders in Bulk!",
                 f"This selection suggests there are: \n* {item_name}: {item_name_bulk_total}"

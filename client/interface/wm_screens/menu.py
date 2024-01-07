@@ -201,7 +201,7 @@ class Menu(object):
 
 
     def display_menu_items(self):
-        database = Database(database="horizon_restaurants")
+        # database = Database(database="horizon_restaurants")
         num_rows = database.count_table_rows("menu_items")
         for row_number in range(num_rows):
             self.create_menu_item_row(self.menu_items_frame, database, row_number)
