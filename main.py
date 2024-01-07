@@ -377,6 +377,12 @@ class Application(object):
     def display_user_management(self):
         """Top most level function to display the user management overview page. """
         
+        self.user_management.btn_create_account.bind("<Button>", func=lambda _: (
+            self.user_management.create_user_account()
+        ))
+        
+        self.user_management.btn_delete_account.configure(command=lambda: self.user_management.delete_user_account())
+        
         self.user_management.display_frames()
 
 

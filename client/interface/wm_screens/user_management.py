@@ -8,8 +8,8 @@
 
 from client.interface.toolkits import headings, inputs
 from client.settings import BACKGROUND_COLOR
-from server.sql.database import SQLBranch
-from tkinter import messagebox
+from server.sql.database import SQLBranch, SQLStaff
+from tkinter import messagebox, simpledialog
 
 import tkinter.ttk as ttk
 import tkinter as tk
@@ -20,6 +20,8 @@ class UserManagement(object):
         self._parent = parent
         self.style = ttk.Style()
         self.branch = SQLBranch()
+        self.sqlstaff = SQLStaff()
+        self.branch_selection_value = tk.StringVar()
         
         # print(self.branch.get_branch_cities())
         
@@ -67,9 +69,14 @@ class UserManagement(object):
         # self.branch_locations_cities = self.branch_locations_items.loc[:, ['city_name']]
         self.branch_locations_frame = ttk.Frame(self.staff_lbl_frame, style="branch_locations_frame.TFrame", padding=12)
         self.branch_locations_prefix_label = ttk.Label(self.branch_locations_frame, style="branch_locations_prefix_label.TLabel", text="Select Location: ")
-        self.branch_selection_input = ttk.Combobox(self.branch_locations_frame, style="branch_selection_input.TCombobox")
+        self.branch_selection_input = ttk.Combobox(self.branch_locations_frame, style="branch_selection_input.TCombobox", state='readonly')
         self.branch_selection_input2 = ttk.Combobox(self.branch_locations_frame, style="branch_selection_input2.TCombobox", values=self.city_names, state='readonly')
-        self.branch_selection_input2.bind("<<ComboboxSelected>>", func=lambda _: messagebox.showerror("asdas", "asdasd"))
+        
+        # Add an updater command to branch city selection
+        self.branch_selection_input2.bind("<<ComboboxSelected>>", func=lambda _, data=self.branch_selection_value: (
+            self.branch_selection_value.set(self.branch_selection_input2.get()),
+            self.update_branches_selection(city_selected=data)
+        ))
         
         # Submit to database frame
         self.bottom_frame = ttk.LabelFrame(self.user_management_frame, text="Account Operations", style="um_bottom_frame.TLabelframe", name="um_bottom_frame")
@@ -80,11 +87,58 @@ class UserManagement(object):
         self.btn_update_account = tk.Button(self.button_frame, text="Update Account")
         self.btn_delete_account = tk.Button(self.button_frame, text="Delete Account")
         
-    # def update_select_branch_button(self):
-    #     self.branch_selection_input2.bind("<<ComboboxSelected>>", func=lambda _:)
+    def update_branches_selection(self, city_selected):
+        """Updates the branch selection based on city selection. """
         
-
+        city_id = self.branch.get_branch_city_id(city_name=city_selected)
+        branches = self.branch.get_branch_locations_of_id(city_id=city_id)
         
+        branch_selector = []
+        
+        for branch in range(len(branches)):
+            branch_id = branches[branch][0]
+            branch_postcode = branches[branch][1]
+            
+            selection = f"ID: {branch_id}. Postcode: {branch_postcode}."
+            branch_selector.append(selection)
+            
+        self.branch_selection_input.configure(values=branch_selector)
+        
+    def create_user_account(self):
+        """Adds functionality to the 'create account' button. """
+        
+        # Get all the create account inputs
+        first_name = self.first_name.input_box.get()
+        last_name = self.last_name.input_box.get()
+        phone_number = self.phone_number.input_box.get()
+        
+        staff_id = self.staff_id_generate_label.cget('text')
+        password = self.password_entry.get()
+        branch_id = self.branch_selection_input.get()
+        branch_city = self.branch_selection_input2.get()
+        branch_role = self.branch_role_combobox.get()
+        
+        # # Create table data based on the values
+        self.btn_create_account.bind(
+            "<Button>", func=lambda _,
+            fname = first_name,
+            lname = last_name,
+            role = branch_role,
+            sid = staff_id,
+            pswrd = password,
+            phone = phone_number,
+            bid = branch_id,
+            bcity = branch_city: (
+                self.sqlstaff.create_staff_user(fname, lname, sid, pswrd, phone, role, bid)
+            ))
+        
+    
+    def delete_user_account(self):
+        """Adds functionality to the 'delete account' button. Deletes staff. """
+        
+        staff_id_number = simpledialog.askstring("Deleting Staff User", "Enter Staff ID to delete: ")
+        self.sqlstaff.del_staff_user(staff_id_number)
+                
     def display_frames(self):
         
         # Title Frame
@@ -130,6 +184,9 @@ class UserManagement(object):
         self.staff_id_generate_frame.grid(row=0, column=0, sticky=tk.NSEW)
         self.staff_id_prefix_label.grid(row=0, column=0, sticky=tk.NSEW)
         self.staff_id_generate_label.grid(row=0, column=1, sticky=tk.NSEW)
+        
+        # Re-update the staff id generator
+        self.staff_id_generate_label.configure(text=random.randrange(1280128, 9999999))
         
         # Staff password
         self.password_frame.grid_rowconfigure(0, weight=1)
@@ -232,7 +289,7 @@ class UserManagement(object):
         
         # User management frame
         self.user_management_frame.grid(row=1, column=0, rowspan=2, columnspan=3, sticky=tk.NSEW)   # Container Frame
-        self.top_frame.grid(row=0, column=0, columnspan=3,sticky=tk.NSEW, padx=12, pady=12)         # Personal frame
+        self.top_frame.grid(row=0, column=0, columnspan=3, sticky=tk.NSEW, padx=12, pady=12)         # Personal frame
         self.middle_frame.grid(row=1, column=0, columnspan=3, sticky=tk.NSEW, padx=12, pady=12)     # Staff frame
         self.bottom_frame.grid(row=2, column=0, columnspan=3, sticky=tk.NSEW, padx=12, pady=12)     # CRUD frame
         

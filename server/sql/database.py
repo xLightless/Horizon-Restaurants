@@ -556,3 +556,25 @@ class SQLReservations(object):
 class SQLBranch(object):
     def get_branch_cities(self):
         return database.get_table("branch_cities", True)
+    
+    def get_branch_locations(self):
+        return database.get_table("branch_locations", True)
+    
+    def get_branch_locations_of_id(self, city_id):
+        return database.get_table_records_of_value("branch_locations", "city_id", city_id)
+    
+    def get_branch_city_id(self, city_name):
+        record = database.get_table_value_record("branch_cities", "city_name", city_name.get())
+        city_id = record[0]
+        return city_id
+        
+class SQLStaff(object):
+    def create_staff_user(self, first_name, last_name, staff_id_number, password, phone, branch_role, branch_id):
+        pk_id = database.count_table_rows("staff")
+        database.set_table_record("staff", pk_id=pk_id, values=(first_name, last_name, str(staff_id_number), password, str(phone), "NONE",str(branch_role), str(branch_id)))
+        
+    def del_staff_user(self, staff_id_number):
+        database.del_table_record("staff", "staff_id_number", staff_id_number)
+    
+    # def get_branches_of_city_id(self, city_id):
+    #     return database.get_table_records_of_value("branch_locations", "city_id", city_id, True)
