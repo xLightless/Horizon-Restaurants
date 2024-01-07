@@ -38,6 +38,9 @@ class Menu(object):
         self._title_frame = ttk.Frame(self.right_frame, style="menu_title_frame.TFrame", name="menu_title_frame")
         self.menu_captions_frame = ttk.Frame(self.right_frame, style="menu_captions_frame.TFrame", name="menu_captions_frame")
         self.menu_items_frame = ttk.Frame(self.right_frame, style="menu_items_frame.TFrame", name="menu_items_frame")
+        
+        self.item_counter = 0 #Big Brain moment, interal id to replace as order_item_id when payment is clicked
+        self.order_items = {} # Dictionary to track each orders details in treeview
 
         self.preload_menu_images()
         self.display_menu_items()
@@ -73,14 +76,12 @@ class Menu(object):
         self.payment_frame.grid_columnconfigure(1, weight = 1)
         self.payment_frame.grid_columnconfigure(2, weight = 1)
 
-
         # Right Side / Menu Frame
         self.right_frame.grid_rowconfigure(0, weight=0)
         self.right_frame.grid_rowconfigure(1, weight=0)
         self.right_frame.grid_rowconfigure(2, weight=10)
         self.right_frame.grid_columnconfigure(0, weight=10)
         self.right_frame.grid_columnconfigure(1, weight=0)
-
 
         self._title_frame.grid_columnconfigure(0, weight=1)
         self._title_frame.grid_columnconfigure(1, weight=1)
@@ -102,11 +103,22 @@ class Menu(object):
         item_description_caption = headings.Heading6(self.menu_captions_frame, text="Description")
         button_caption = headings.Heading6(self.menu_captions_frame, text="Buttons")
 
-        payment_button = ttk.Button(self.payment_frame, text="Pay")# , command=self.process_payment
-        clear_order_button = ttk.Button(self.payment_frame, text="Clear Order")#, command=self.clear_order
+        payment_button = ttk.Button(self.payment_frame, text="Pay", command=self.process_payment) 
+        clear_order_button = ttk.Button(self.payment_frame, text="Clear Order", command=self.clear_order)
+        
+        # Initalised to access in other methods
+        self.order_treeview = ttk.Treeview(self.total_order_frame, columns=("Item Name", "Price"))
+        self.order_treeview.heading("#0", text="ID", anchor="w") 
+        self.order_treeview.heading("Item Name", text="Item Name", anchor="w")
+        self.order_treeview.heading("Price", text="Price", anchor="w")
+        self.order_treeview.column("#0", width=0, stretch=tk.NO)#Way to hide it
+        self.order_treeview.column("Item Name", anchor="w", width=100)
+        self.order_treeview.column("Price", anchor="w", width=100)
 
+        self.order_scrollbar = ttk.Scrollbar(self.total_order_frame, orient="vertical", command=self.order_treeview.yview)
+        self.order_treeview.configure(yscrollcommand=self.order_scrollbar.set)
+        self.order_treeview.bind("<Double-1>", self.on_treeview_item_click) 
 
- 
 
         # Configure Widgets
         
@@ -135,6 +147,8 @@ class Menu(object):
         self.orders_frame.grid(row=1, column =0, sticky=tk.NSEW)
         self.total_order_frame.grid(row =1 , column =0, columnspan=2, sticky=tk.NSEW)
         self.payment_frame.grid(row=2, column=0, columnspan=2, sticky=tk.NSEW)
+
+        
 #-----------------------------------Right Side-----------------------------------------------------------------------#      
 
         self.right_frame.grid(row=0, column=1, rowspan=3, columnspan=2, sticky=tk.NSEW)
@@ -145,6 +159,8 @@ class Menu(object):
         #Grid the widgets
         payment_button.grid(row=0, column =0, sticky="NSEW")
         clear_order_button.grid(row=0, column=1, sticky="NSEW")
+        self.order_treeview.grid(row=0, column=0, sticky="nsew", padx=(10, 0), pady=10)
+        self.order_scrollbar.grid(row=0, column=1, sticky="ns", pady=10)
 
 
 
@@ -171,7 +187,7 @@ class Menu(object):
     
 
     def create_menu_item_row(self, parent_frame, menu_item):
-        menu_item_id = [0] 
+        menu_item_id = [0]
         photo_url = menu_item[1]
         item_name = menu_item[2]
         description = menu_item[3]
@@ -211,98 +227,104 @@ class Menu(object):
 
 
     def display_menu_items(self):
-        num_rows = self.menu.count_menu_table_rows()
-        for row_number in range(num_rows):
-            menu_item = self.menu.get_menu_item_record(row_number)
+        menu_items = self.menu.get_all_menu_items()  # Fetch all menu items at once
+        for menu_item in menu_items:
             self.create_menu_item_row(self.menu_items_frame, menu_item)
 
     def add_to_order(self, item_name, price, menu_item_id):
-        order_item_text = f"{item_name} - £{price}"
-        order_item_label = ttk.Label(self.total_order_frame, text=order_item_text)
-        order_item_label.menu_item_id = menu_item_id  # Storing the menu item id for later use
-        order_item_label.pack()
+        order_item_id = self.item_counter
+        self.item_counter += 1
+
+        self.order_treeview.insert("", "end", iid=order_item_id, values=(item_name, f"£{price}"))
+        self.order_items[order_item_id] = {
+            "menu_item_id": menu_item_id,
+            "item_name": item_name,
+            "price": price
+        }
+
+    def on_treeview_item_click(self, event):
+        doubleselected_item = self.order_treeview.selection() #Selection used to return the interal id of the clicked treeview item
+
+        if doubleselected_item: 
+            internal_id = doubleselected_item[0] # Picks the unique id 
+            self.order_treeview.delete(internal_id)
+
+            if internal_id in self.order_items: #Checks if its actually the one selected
+                del self.order_items[internal_id]
+    
+    def process_payment(self):
+        for order_item_id, item_details in self.order_items.items():
+
+            menu_item_id = item_details["menu_item_id"]
+            item_name = item_details["item_name"]
+            price = item_details["price"]
+
+            #Logic to calculate price etc--------------------------
+
+        self.clear_order()
+
+    def clear_order(self):
+        self.order_treeview.delete(*self.order_treeview.get_children())
+        self.order_items.clear()
+        self.item_counter = 0
 #--------------------------------------------------------------------------------------------#
-    # def process_payment(self):
-    # # Extract items from total_order_frame and prepare data for insertion
-    # order_items = []  # This will be a list of tuples or a similar structure
-    # for widget in self.total_order_frame.winfo_children():
-    #     if isinstance(widget, ttk.Label):
-    #         item_text = widget.cget("text")
-    #         # Extract item_name and price from item_text, then append to order_items
-    #         # ...
+    
+    
+    # def get_menu(self):
+    #     """ Gets the menu and returns all items. """
+    #     return
+    
+    # def get_item(self, item_name:str):
+    #     """ Get an items data from menu. """
+    #     return
+    
+    # def get_item_description(self, item_name:str):
+    #     """ Get the description of a menu item. """
+    #     return
+    
+    # def get_description_allergens(self):
+    #     """ Get the allgerns of an item. """
+    #     return
+    
+    # def get_selected_food_items(self, **args) -> dict: #search for itemsWWW
+    #     return
+    
+    # def suggest_food_items(self):
+    #     """ Arbitrarily suggest food to purchase. """
+    #     return
+    
+    # def mark_items_as_unavailable(self):
+    #     """ Update the menu item as unavailable. """
+    #     return
+    
+    # def check_item_availability(self, item_name:str) -> int:
+    #     """ Check the availablity of a menu item. """
+    #     return self._inventory.check_inventory_stock(item_name)
+    
+    # def _set_item(self, item_name:str, description:str, photo_url:str = None):
+    #     """ Private method for inserting a menu item. """
+    #     return
+    
+    # def _set_item_description(self, description:str):
+    #     """ Private method for inserting a menu item description. """
+    #     return
+    
+    # def _set_item_price(self, price:float):
+    #     """ Private method for inserting a menu item price. """
+    #     return
+    
+    # def _delete_item(self, item_name:str):
+    #     """ Private method for deleting a menu item. """
+    #     return
+    
+    # def _set_category(self, category_name:str):
+    #     """ Private method for inserting a menu item category. """
+    #     return
+    
+    # def _update_category(self, category_name:str):
+    #     """ Private method for updating a menu item category. """
+    #     return
 
-    # # Assuming you have a function in your Database class to insert orders
-    # database.insert_orders(order_items)
-
-    # # Clear the order frame after payment
-    # self.clear_order()
-    
-    # def clear_order(self):
-    # for widget in self.total_order_frame.winfo_children():
-    #     widget.destroy()
-
-    
-    
-    
-    
-    
-    
-    
-    def get_menu(self):
-        """ Gets the menu and returns all items. """
-        return
-    
-    def get_item(self, item_name:str):
-        """ Get an items data from menu. """
-        return
-    
-    def get_item_description(self, item_name:str):
-        """ Get the description of a menu item. """
-        return
-    
-    def get_description_allergens(self):
-        """ Get the allgerns of an item. """
-        return
-    
-    def get_selected_food_items(self, **args) -> dict: #search for itemsWWW
-        return
-    
-    def suggest_food_items(self):
-        """ Arbitrarily suggest food to purchase. """
-        return
-    
-    def mark_items_as_unavailable(self):
-        """ Update the menu item as unavailable. """
-        return
-    
-    def check_item_availability(self, item_name:str) -> int:
-        """ Check the availablity of a menu item. """
-        return self._inventory.check_inventory_stock(item_name)
-    
-    def _set_item(self, item_name:str, description:str, photo_url:str = None):
-        """ Private method for inserting a menu item. """
-        return
-    
-    def _set_item_description(self, description:str):
-        """ Private method for inserting a menu item description. """
-        return
-    
-    def _set_item_price(self, price:float):
-        """ Private method for inserting a menu item price. """
-        return
-    
-    def _delete_item(self, item_name:str):
-        """ Private method for deleting a menu item. """
-        return
-    
-    def _set_category(self, category_name:str):
-        """ Private method for inserting a menu item category. """
-        return
-    
-    def _update_category(self, category_name:str):
-        """ Private method for updating a menu item category. """
-        return
-
-    def _delete_category(self, category_name:str):
-        """ Private method for deleting a menu item category. """
-        return
+    # def _delete_category(self, category_name:str):
+    #     """ Private method for deleting a menu item category. """
+    #     return
