@@ -52,13 +52,25 @@ class Reservations:
     def make_reservation(self):
         # get inputs from input fields
         customer_name = self._input_entries[0].get()
-        first_name = self._input_entries[1].get()
-        last_name = self._input_entries[2].get()
-        allergen_info = self._input_entries[3].get()
-        date = self._input_entries[4].get()
-        time = self._input_entries[5].get()
-        table_number = self._input_entries[6].get()
+        first_name=self._input_entries[0].get()
+        last_name=self._input_entries[1].get()
+        
+        #get allergen info for allergic cutomers
+        allergen_info=self._input_entries[2].get()
+        
+        # Generate automatic Date and Time
+        current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        current_time = datetime.datetime.now().strftime("%H:%M")
 
+        # Generate a random Table Number (assuming the range is from 1 to 20)
+        table_number = str(random.randint(1, 35))
+        
+        # Generate automatic Date and Time
+        current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        current_time = datetime.datetime.now().strftime("%H:%M")
+
+        # Generate a random Table Number (assuming the range is from 1 to 20)
+        table_number = str(random.randint(1, 20))
         # validate non-empty inputs
         if not customer_name or not date or not time or not table_number:
             messagebox.showerror("Error", "Customer Name, Date, Time, and Table Number must be filled")
@@ -73,7 +85,7 @@ class Reservations:
                 time=time,
                 table_number=table_number,
                 phone_number="",
-                allergen_info=allergen_info
+                allergen_info= allergen_info
             )
 
             # If successful reservation is made
@@ -105,4 +117,5 @@ class Reservations:
 
         except InvalidCredentialsError as e:
             # show an error message if there's a problem with deleting reservation
+            messagebox.showerror("Error", f"Error in deleting the reservation: {str(e)}")
             messagebox.showerror("Error", f"Error in deleting the reservation: {str(e)}")

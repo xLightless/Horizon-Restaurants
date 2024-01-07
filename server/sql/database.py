@@ -1,5 +1,6 @@
 import mysql.connector
 import warnings
+import random
 import pandas as pd
 import random
 
@@ -603,7 +604,11 @@ class SQLReservations(object):
         kitchen = SQLKitchenOrders()
         kitchen_id = len(kitchen.get_orders()['order_id']) + 1
         database.set_table_record("kitchen", kitchen_id, values=(reservation_id,))
+<<<<<<< HEAD
     
+=======
+        
+>>>>>>> 7d792adcc39a14e768d8a35560544a56c2083a67
     def delete_reservation(self, reservation_id):
         """ This function deletes a row in reservations of the given parameter. """
         
