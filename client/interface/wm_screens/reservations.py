@@ -71,13 +71,18 @@ class Reservations:
     def make_reservation(self):
         # get inputs from input fields
         customer_name = self._input_entries[0].get()
-
+        first_name=self._input_entries[0].get()
+        last_name=self._input_entries[1].get()
+        
+        #get allergen info for allergic cutomers
+        allergen_info=self._input_entries[2].get()
+        
         # Generate automatic Date and Time
         current_date = datetime.datetime.now().strftime("%Y-%m-%d")
         current_time = datetime.datetime.now().strftime("%H:%M")
 
         # Generate a random Table Number (assuming the range is from 1 to 20)
-        table_number = str(random.randint(1, 20))
+        table_number = str(random.randint(1, 35))
         
         # Generate automatic Date and Time
         current_date = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -99,7 +104,7 @@ class Reservations:
                 time=current_time,
                 table_number=table_number,
                 phone_number="",
-                allergen_id=""
+                allergen_info= allergen_info
             )
 
             # If successful reservation is made
