@@ -43,8 +43,8 @@ class Menu(object):
         self.item_counter = 0 #Big Brain moment, interal id to replace as order_item_id when payment is clicked
         self.order_items = {} # Dictionary to track each orders details in treeview
 
-        # self.preload_menu_images()
-        # self.display_menu_items()
+        self.preload_menu_images()
+        self.display_menu_items()
         
     def display_frames(self):
         # Left side with includes the frames for the search bars and orders

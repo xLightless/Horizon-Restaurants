@@ -8,6 +8,7 @@
 
 from client.interface.toolkits import headings, inputs
 from client.settings import BACKGROUND_COLOR
+from client.errors import AccountCreationError
 from server.sql.database import SQLBranch, SQLStaff
 from tkinter import messagebox, simpledialog
 
@@ -104,33 +105,47 @@ class UserManagement(object):
             
         self.branch_selection_input.configure(values=branch_selector)
         
-    def create_user_account(self):
-        """Adds functionality to the 'create account' button. """
+    def get_user_input_data(self):
+        """Returns user data inputted in user management. """
         
         # Get all the create account inputs
-        first_name = self.first_name.input_box.get()
-        last_name = self.last_name.input_box.get()
-        phone_number = self.phone_number.input_box.get()
+        try:
+            first_name = self.first_name.input_box.get()
+            last_name = self.last_name.input_box.get()
+            phone_number = self.phone_number.input_box.get()
+            
+            staff_id = self.staff_id_generate_label.cget('text')
+            password = self.password_entry.get()
+            branch_id = int(self.branch_selection_input.get().split(".")[0].replace("ID: ", "").replace(".", ''))
+            branch_city = self.branch_selection_input2.get()
+            branch_role = self.branch_role_combobox.get().split('.')[0]
+            email = "NONE"
+        except ValueError:
+            messagebox.showerror("Account Creation Error", AccountCreationError())
+            return
         
-        staff_id = self.staff_id_generate_label.cget('text')
-        password = self.password_entry.get()
-        branch_id = self.branch_selection_input.get()
-        branch_city = self.branch_selection_input2.get()
-        branch_role = self.branch_role_combobox.get()
+        except UnboundLocalError:
+            messagebox.showerror("Account Creation Error", AccountCreationError())
+            return
+        
+        return [first_name, last_name, staff_id, password, phone_number, email, branch_role, branch_id]
+        
+    def create_user_account(self):
+        """Adds functionality to the 'create account' button. """
+        # for item in row_data:
+        #     if item == '':
+        #         return messagebox.showerror("Invalid Account Creation!", f"There appears to be missing data. ")
+            
+        #     if item == row_data[5]:
+        #         print(item)
         
         # # Create table data based on the values
-        self.btn_create_account.bind(
-            "<Button>", func=lambda _,
-            fname = first_name,
-            lname = last_name,
-            role = branch_role,
-            sid = staff_id,
-            pswrd = password,
-            phone = phone_number,
-            bid = branch_id,
-            bcity = branch_city: (
-                self.sqlstaff.create_staff_user(fname, lname, sid, pswrd, phone, role, bid)
-            ))
+        self.btn_create_account.configure(command=lambda: print(self.get_user_input_data()))
+                
+                
+                
+                
+                # self.sqlstaff.create_staff_user(fname, lname, sid, pswrd, phone, role, bid))
         
     
     def delete_user_account(self):

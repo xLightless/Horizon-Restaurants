@@ -1,6 +1,8 @@
 import mysql.connector
 import warnings
 import pandas as pd
+import random
+
 
 # Disables pandas sql warning
 warnings.simplefilter(action='ignore', category=UserWarning)
@@ -433,6 +435,54 @@ class SQLMenu(object):
         columns = ["item_name", "description", "price"]
         data = data.loc[:, columns]
         return data
+
+    def get_menu_allergen(self, item_name):
+        try:
+            
+            menu_item_record = database.get_table_value_record("menu_items", "item_name", item_name)
+            menu_item_id = menu_item_record[0] if menu_item_record else None
+
+            if menu_item_id:
+                
+                allergen_record = database.get_table_value_record("menu_allergens", "menu_item_idx", menu_item_id)
+                allergen_id = allergen_record[0] if allergen_record else None
+
+                if allergen_id:
+                   
+                    allergen_name_record = database.get_table_value_record("allergens", "allergen_id", allergen_id)
+                    allergen_name = allergen_name_record[1] if allergen_name_record else None
+
+                    if allergen_name:
+                        return {
+                            'menu_item_id': menu_item_id,
+                            'allergen_id': allergen_id,
+                            'allergen_name': allergen_name
+                        }
+        except Exception as e:
+            print(f"Error in get_additional_items: {str(e)}")
+        return None
+    def count_menu_table_rows(self):
+
+        total_items = database.count_table_rows("menu_items")
+        return total_items
+
+    def get_menu_item_record(self, row:int, dataframe: bool = False):
+        return database.get_table_record("menu_items", row, dataframe)
+
+    def get_all_menu_items(self):
+        """ Fetch all menu items at once """
+        return database.get_table("menu_items")
+
+    def insert_new_order(self, order_date, order_time, order_price, order_discount, menu_item_id, order_status):
+        current_max_order_id = database.count_table_rows("orders")
+        new_order_id = current_max_order_id + 1
+        print("Attempting to insert order with menu_item_id:", menu_item_id)
+
+        values = (order_date, order_time, order_price, order_discount, order_status, str(menu_item_id))
+
+        database.set_table_record("orders", new_order_id, values)
+
+        return new_order_id
         
         
 class SQLKitchenOrders(object):
@@ -525,7 +575,7 @@ class SQLReservations(object):
     #     except Exception as e:
     #         print(f"Error in deleting reservation: {str(e)}")
     
-    def create_reservation(self, date, time, table_number, first_name, last_name, phone_number, allergen_id):
+    def create_reservation(self, date, time, table_number, first_name, last_name, phone_number, allergen_info):
         """ Creates a reservation for a customer along with their allergens and info.
 
         Args:
@@ -535,7 +585,7 @@ class SQLReservations(object):
             first_name (_type_): customer first name.
             last_name (_type_): customer last name.
             phone_number (_type_): customer phone number.
-            allergen_id (_type_): allergen id.
+            allergen_info (_type_): allergen info.
         """
         
         reservations = self.get_reservations()
@@ -543,10 +593,16 @@ class SQLReservations(object):
         reservation_id = len_reservations + 1
         database.set_table_record("reservations", reservation_id, values=(date, time, table_number))
         
+        #get row number and 
         customers = self.get_customers()
         len_customers = len(customers['customer_id'])
-        customer_id = len_customers + 1
-        database.set_table_record("customers", customer_id, values=(first_name, last_name, phone_number, allergen_id))
+        customer_id = random.randint(1, 1000000)
+        database.set_table_record("customers", customer_id, values=(first_name, last_name, phone_number, allergen_info))
+        
+        #insert kitchen id and reservation id into kitchen table
+        kitchen = SQLKitchenOrders()
+        kitchen_id = len(kitchen.get_orders()['order_id']) + 1
+        database.set_table_record("kitchen", kitchen_id, values=(reservation_id,))
     
     def delete_reservation(self, reservation_id):
         """ This function deletes a row in reservations of the given parameter. """
