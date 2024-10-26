@@ -1,5 +1,5 @@
 from client.interface import Interface
-from client.interface.wm_screens import login, menu, admin, payments, reports, reservations, kitchen
+from client.interface.wm_screens import login, menu, payments, reports, reservations, kitchen, user_management
 from client.settings import *
 from client.interface.toolkits import headings
 from client.errors import InvalidCredentialsError
@@ -237,6 +237,8 @@ class Application(object):
         self.home_welcome = headings.Heading1(self.home_frame)
         self.home_info = headings.TextLabel(self.home_frame)
         self.kitchen_interface = kitchen.Kitchen(self.main_window)
+        self.reservations = reservations.Reservations(self.main_window)
+        self.user_management = user_management.UserManagement(self.main_window)
         
         # Lowest level of staff
         self.staff = login.Staff()
@@ -350,7 +352,7 @@ class Application(object):
         self.menu_interface.display_frames()
         
     def display_reservations(self):
-        return
+        self.reservations.display_frames()
     
     def display_kitchen(self):
         """Top most level function to display the kitchen/order overview page. """
@@ -372,7 +374,7 @@ class Application(object):
         return
     
     def display_user_management(self):
-        return
+        self.user_management.display_frames()
 
 
 if __name__ == '__main__':

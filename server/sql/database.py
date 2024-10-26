@@ -1,6 +1,7 @@
 import mysql.connector
 import warnings
 import pandas as pd
+import random
 
 # Disables pandas sql warning
 warnings.simplefilter(action='ignore', category=UserWarning)
@@ -31,26 +32,6 @@ class Database(object):
         )
         
         self.cursor = self.__db.cursor()
-
-    def make_reservation(self, date, time, table_number, branch_id, customer_id):
-        """ Make a new reservation """
-        try:
-            query = "INSERT INTO reservations (date, time, table_number, branch_id, customer_id) VALUES (%s, %s, %s, %s, %s)"
-            values = (date, time, table_number, branch_id, customer_id)
-            self.cursor.execute(query, values)
-            self.__db.commit()
-        except Exception as e:
-            print(f"Error in making reservation: {str(e)}")
-
-    def delete_reservation(self, reservation_id):
-        """ Delete a reservation """
-        try:
-            query = "DELETE FROM reservations WHERE reservation_id = %s"
-            values = (reservation_id,)
-            self.cursor.execute(query, values)
-            self.__db.commit()
-        except Exception as e:
-            print(f"Error in deleting reservation: {str(e)}")
             
     def get_table(self, table:str, dataframe:bool = False):
         """ Gets the raw table of a database. Can be used in polymorphism
@@ -439,7 +420,7 @@ class Database(object):
         
         
         
-database = Database(database="horizon_restaurants")
+database = Database(database="horizon_restaurants2")
 
 class SQLMenu(object):
     def get_menu_table(self):
@@ -457,17 +438,17 @@ class SQLMenu(object):
     def get_menu_allergen(self, item_name):
         try:
             
-            menu_item_record = self.database.get_table_value_record("menu_items", "item_name", item_name)
+            menu_item_record = database.get_table_value_record("menu_items", "item_name", item_name)
             menu_item_id = menu_item_record[0] if menu_item_record else None
 
             if menu_item_id:
                 
-                allergen_record = self.database.get_table_value_record("menu_allergens", "menu_item_idx", menu_item_id)
+                allergen_record = database.get_table_value_record("menu_allergens", "menu_item_idx", menu_item_id)
                 allergen_id = allergen_record[0] if allergen_record else None
 
                 if allergen_id:
                    
-                    allergen_name_record = self.database.get_table_value_record("allergens", "allergen_id", allergen_id)
+                    allergen_name_record = database.get_table_value_record("allergens", "allergen_id", allergen_id)
                     allergen_name = allergen_name_record[1] if allergen_name_record else None
 
                     if allergen_name:
@@ -485,27 +466,25 @@ class SQLMenu(object):
         return total_items
 
     def get_menu_item_record(self, row:int, dataframe: bool = False):
-        return self.database.get_table_record("menu_items", row, dataframe)
+        return database.get_table_record("menu_items", row, dataframe)
 
     def get_all_menu_items(self):
         """ Fetch all menu items at once """
-        return self.database.get_table("menu_items")
+        return database.get_table("menu_items")
 
     def insert_new_order(self, order_date, order_time, order_price, order_discount, menu_item_id, order_status):
-        current_max_order_id = self.database.count_table_rows("orders")
+        current_max_order_id = database.count_table_rows("orders")
         new_order_id = current_max_order_id + 1
         print("Attempting to insert order with menu_item_id:", menu_item_id)
 
         values = (order_date, order_time, order_price, order_discount, order_status, str(menu_item_id))
 
-        self.database.set_table_record("orders", new_order_id, values)
+        database.set_table_record("orders", new_order_id, values)
 
         return new_order_id
         
         
 class SQLKitchenOrders(object):
-    
-        
     def get_displayed_orders(self):
         # If this number is set then the reservation has no table.
         NO_TABLE_NUMBER = 999
@@ -538,18 +517,27 @@ class SQLKitchenOrders(object):
         orders = database.get_table_records_of_value("orders", "order_status", "PAID", True)
         return orders      
      
-    def cancel_kitchen_order(self, primary_key_column_name, primary_key):
+    def cancel_kitchen_order(self, order_id_pk):
         """Updates an order to cancelled due to it being removed by kitchen staff. """
         
-        database.update_table_record_value("orders", "order_status", "CANCELLED", primary_key_column_name, primary_key)
+        # Updates the order to cancelled.
+        database.update_table_record_value("orders", "order_status", "CANCELLED", "order_id", order_id_pk)
      
     def get_bulk_orders(self):
         return
     
-    def mark_order_as_ready(self,  primary_key_column_name, primary_key):
+    def mark_order_as_ready(self, order_primary_key, serve_date, serve_time):
         """Updates an order to 'mark as ready' by kitchen staff. """
         
-        database.update_table_record_value("orders", "order_status", "COMPLETED", primary_key_column_name, primary_key)
+        # Get the order id via kitchen table
+        kitchen_order = database.get_table_value_record("kitchen", "order_id", order_primary_key)
+        record_primary_key = kitchen_order[0]
+        
+        # If a kitchen/order record exists, update the order as completed along with a serve datetime.
+        if type(record_primary_key) == int:
+            database.update_table_record_value("kitchen", "serve_date", value=serve_date, pk_column_name="kitchen_id", pk_id=record_primary_key)
+            database.update_table_record_value("kitchen", "serve_time", value=serve_time, pk_column_name="kitchen_id", pk_id=record_primary_key)
+            database.update_table_record_value("orders", "order_status", "COMPLETED", "order_id", order_primary_key)
     
     def get_sequential_orders(self, table_number:int):
         return
@@ -562,5 +550,104 @@ class SQLKitchenOrders(object):
     
 
 class SQLReservations(object):
+    def get_customers(self):
+        return database.get_table("customer", True)
+    
     def get_reservations(self):
         return database.get_table("reservations", True)
+    
+    # def create_reservation(self, date, time, table_number, first_name, last_name, phone_number, allergen_id):
+    #     """ Creates a reservation for a customer along with their allergens and info.
+
+    #     Args:
+    #         date (_type_): YYYY-MM-DD
+    #         time (_type_): HH:MM:SS
+    #         table_number (_type_): the table number.
+    #         first_name (_type_): customer first name.
+    #         last_name (_type_): customer last name.
+    #         phone_number (_type_): customer phone number.
+    #         allergen_id (_type_): allergen id.
+    #     """
+        
+    #     reservations = self.get_reservations()
+    #     len_reservations = len(reservations['reservation_id'])
+    #     reservation_id = len_reservations + 1
+    #     database.set_table_record("reservations", reservation_id, values=(date, time, table_number))
+        
+    #     customers = self.get_customers()
+    #     len_customers = len(customers['customer_id'])
+    #     customer_id = len_customers + 1
+    #     database.set_table_record("customers", customer_id, values=(first_name, last_name, phone_number, allergen_id))
+    
+    def create_reservation(self, date, time, table_number, first_name, last_name, phone_number, allergen_name):
+        """ Creates a reservation for a customer along with their allergens and info.
+
+        Args:
+            date (_type_): YYYY-MM-DD
+            time (_type_): HH:MM:SS
+            table_number (_type_): the table number.
+            first_name (_type_): customer first name.
+            last_name (_type_): customer last name.
+            phone_number (_type_): customer phone number.
+            allergen_name (_type_): allergen name.
+        """
+        
+        reservations = self.get_reservations()
+        len_reservations = len(reservations['reservation_id'])
+        reservation_id = len_reservations + 1
+        database.set_table_record("reservations", reservation_id, values=(date, time, table_number))
+        
+        #get row number and 
+        customers = self.get_customers()
+        len_customers = len(customers['customer_id'])
+        customer_id = random.randint(1, 1000000)
+        # database.set_table_record("customer", customer_id, values=(first_name, last_name, phone_number, allergen_name))
+        
+        # corelate allergen name to allergen ID from 1 to 15
+        allergen_id = self.get_allergen_id(allergen_name)
+        
+        # insert customer table with information
+        database.set_table_record("customer", customer_id, values=(first_name, last_name, str(phone_number), str(allergen_id)))
+        
+        #insert kitchen id and reservation id into kitchen table
+        # kitchen = SQLKitchenOrders()
+        # kitchen_id = len(kitchen.get_orders()['order_id']) + 1
+        # database.set_table_record("kitchen", kitchen_id, values=(date, time, str(customer_id), str(reservation_id), "0", "0"))
+        
+    def get_allergen_id(self, allergen_name):
+        #Gets the allergen ID based on the allergen name. """
+        menu_allergens = database.get_table("allergens", True)
+        allergen_id = menu_allergens[menu_allergens['allergen_name'] == allergen_name]['allergen_id'].values[0]
+        return allergen_id
+    
+    def delete_reservation(self, reservation_id):
+        """ This function deletes a row in reservations of the given parameter. """
+        
+        database.del_table_record("reservations", "reservation_id", value=str(reservation_id))
+
+class SQLBranch(object):
+    def get_branch_cities(self):
+        return database.get_table("branch_cities", True)
+    
+    def get_branch_locations(self):
+        return database.get_table("branch_locations", True)
+    
+    def get_branch_locations_of_id(self, city_id):
+        return database.get_table_records_of_value("branch_locations", "city_id", city_id)
+    
+    def get_branch_city_id(self, city_name):
+        record = database.get_table_value_record("branch_cities", "city_name", city_name.get())
+        city_id = record[0]
+        return city_id
+        
+class SQLStaff(object):
+    def create_staff_user(self, first_name, last_name, staff_id_number, password, phone, branch_role, branch_id):
+        pk_id = database.count_table_rows("staff")
+        pk_id = pk_id + 1
+        database.set_table_record("staff", pk_id=pk_id, values=(first_name, last_name, str(staff_id_number), password, str(phone), "NONE",str(branch_role), str(branch_id)))
+        
+    def del_staff_user(self, staff_id_number):
+        database.del_table_record("staff", "staff_id_number", staff_id_number)
+    
+    # def get_branches_of_city_id(self, city_id):
+    #     return database.get_table_records_of_value("branch_locations", "city_id", city_id, True)

@@ -17,6 +17,8 @@ import tkinter.ttk as ttk
 import tkinter as tk
 import datetime
 from tkinter.messagebox import showinfo
+import pandas as pd
+
 
 class Menu(object):
     def __init__(self, parent):
@@ -38,14 +40,13 @@ class Menu(object):
         # Menu
         self.right_frame = ttk.Frame(self.parent.content_frame, style="right_frame.TFrame", name="right_frame", border=1, relief=tk.SOLID)
         self._title_frame = ttk.Frame(self.right_frame, style="menu_title_frame.TFrame", name="menu_title_frame")
-        self.menu_captions_frame = ttk.Frame(self.right_frame, style="menu_captions_frame.TFrame", name="menu_captions_frame")
+        self.menu_entry_frame = ttk.Frame(self.right_frame, style="menu_entry_frame.TFrame", name="menu_entry_frame")
         self.menu_items_frame = ttk.Frame(self.right_frame, style="menu_items_frame.TFrame", name="menu_items_frame")
         
         self.item_counter = 0 #Big Brain moment, interal id to replace as order_item_id when payment is clicked
         self.order_items = {} # Dictionary to track each orders details in treeview
 
         self.preload_menu_images()
-        self.display_menu_items()
         
     def display_frames(self):
         # Left side with includes the frames for the search bars and orders
@@ -89,21 +90,17 @@ class Menu(object):
         self._title_frame.grid_columnconfigure(1, weight=1)
         self._title_frame.grid_columnconfigure(2, weight=1)
 
-        self.menu_captions_frame.grid_columnconfigure(0, weight = 1)
-        self.menu_captions_frame.grid_columnconfigure(1, weight = 1)
-        self.menu_captions_frame.grid_columnconfigure(2, weight = 1)
-        self.menu_captions_frame.grid_columnconfigure(3, weight = 1)
-        self.menu_captions_frame.grid_columnconfigure(4, weight = 1)
+        self.menu_entry_frame.grid_columnconfigure(0, weight = 1)
 
-        self.menu_items_frame.grid_columnconfigure(0, weight=1)
+        self.menu_items_frame.grid_columnconfigure(0, weight=10)
+        self.menu_items_frame.grid_columnconfigure(1, weight=0)
         self.menu_items_frame.grid_rowconfigure(0, weight = 1)
 
         # Widgets
         title = headings.Heading6(self._title_frame, text="Menu Items")
-        image_caption = headings.Heading6(self.menu_captions_frame, text="Image")
-        item_name_caption = headings.Heading6(self.menu_captions_frame, text="Item Name") 
-        item_description_caption = headings.Heading6(self.menu_captions_frame, text="Description")
-        button_caption = headings.Heading6(self.menu_captions_frame, text="Buttons")
+        self.search_var = tk.StringVar()
+        self.search_entry = tk.Entry(self.search_frame, textvariable=self.search_var)
+        self.search_button = ttk.Button(self.search_frame, text="Search", command=self.search_menu_items)
 
         payment_button = ttk.Button(self.payment_frame, text="Pay", command=self.process_payment) 
         clear_order_button = ttk.Button(self.payment_frame, text="Clear Order", command=self.clear_order)
@@ -127,21 +124,17 @@ class Menu(object):
         # Configure Widgets
         
         title.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
-        image_caption.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
-        item_name_caption.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
-        item_description_caption.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
-        button_caption.label.configure(background=BACKGROUND_COLOR, fg="#FFFFFF")
 
         # Styling for frames
-        self.style.configure("left_frame.TFrame")
-        self.style.configure("right_frame.TFrame")
-        self.style.configure("orders_frame.TFrame", background = "red")
-        self.style.configure("total_order_frame.TFrame", background = "yellow")
-        self.style.configure("payment_frame.TFrame", background = "purple")
-        self.style.configure("search_frame.TFrame", background = "blue")
-        self.style.configure("menu_items_frame.TFrame")
-        self.style.configure("menu_title_frame.TFrame", borderwidth=1, relief="solid")
-        self.style.configure("menu_captions_frame.TFrame", borderwidth=1, relief="solid")
+        self.style.configure("left_frame.TFrame", background =BACKGROUND_COLOR)
+        self.style.configure("right_frame.TFrame", background =BACKGROUND_COLOR)
+        self.style.configure("orders_frame.TFrame", background =BACKGROUND_COLOR)
+        self.style.configure("total_order_frame.TFrame", background =BACKGROUND_COLOR)
+        self.style.configure("payment_frame.TFrame", background =BACKGROUND_COLOR)
+        self.style.configure("search_frame.TFrame", background =BACKGROUND_COLOR)
+        self.style.configure("menu_items_frame.TFrame", background =BACKGROUND_COLOR)
+        self.style.configure("menu_title_frame.TFrame", background =BACKGROUND_COLOR)
+        self.style.configure("menu_entry_frame.TFrame", background =BACKGROUND_COLOR)
         
         
         # Grid The Frames
@@ -152,12 +145,11 @@ class Menu(object):
         self.total_order_frame.grid(row =1 , column =0, columnspan=2, sticky=tk.NSEW)
         self.payment_frame.grid(row=2, column=0, columnspan=2, sticky=tk.NSEW)
 
-        
 #-----------------------------------Right Side-----------------------------------------------------------------------#      
-
+                
         self.right_frame.grid(row=0, column=1, rowspan=3, columnspan=2, sticky=tk.NSEW)
         self._title_frame.grid(row=0, column=0, sticky=tk.NSEW)
-        self.menu_captions_frame.grid(row=1, column = 0, sticky=tk.NSEW)
+        self.menu_entry_frame.grid(row=1, column = 0, sticky=tk.NSEW)
         self.menu_items_frame.grid(row=2, column =0, sticky=tk.NSEW)
 
         #Grid the widgets
@@ -168,26 +160,9 @@ class Menu(object):
         self.confirm_checkbox.grid(row=0, column=2, sticky="NSEW")
 
         title.label.grid(row=0, column=0, columnspan=3, rowspan = 1, sticky=tk.NSEW)
-        image_caption.label.grid(row=0, column=0, sticky=tk.NSEW)
-        item_name_caption.label.grid(row=0, column=1, sticky=tk.NSEW)
-        item_description_caption.label.grid(row=0, column=2, sticky=tk.NSEW)
-        button_caption.label.grid(row=0, column=3, columnspan=2, sticky=tk.NSEW)
-
-    def preload_menu_images(self):
-        menu_items = self.menu.get_menu_table()
-        self.preloaded_images = {}
-
-        for item in menu_items:
-            photo_url = item[1] 
-            if photo_url:
-                try:
-                    response = requests.get(photo_url)
-                    img_data = Image.open(BytesIO(response.content))
-                    img_data = img_data.resize((64, 64), Image.Resampling.LANCZOS)
-                    self.preloaded_images[photo_url] = ImageTk.PhotoImage(img_data)
-                except Exception as e:
-                    print(f"Error loading image from {photo_url}: {e}")
-
+        self.search_entry.grid(row=0, column=0, sticky="ew", padx=(10, 0), pady=(10, 10))
+        self.search_button.grid(row=0, column=1, padx=(10, 0), pady=(10, 10))
+    
     def show_allergens_popup(self, item_name):
         additional_items = self.menu.get_menu_allergen(item_name)
 
@@ -201,16 +176,44 @@ class Menu(object):
             # If no additional items are found, display an information message using showinfo
             showinfo("No Allergens", "{} has no additional items (allergens)".format(item_name))
 
+    def preload_menu_images(self):
+            menu_items = self.menu.get_menu_table()
+            self.preloaded_images = {}
+
+            for photo_url in menu_items['photo_url']:
+                if pd.notna(photo_url):  # Check the URL
+                    try:
+                        response = requests.get(photo_url)
+                        if response.status_code == 200:
+                            img_data = Image.open(BytesIO(response.content))
+                            img_data = img_data.convert("RGBA")
+                            img_data = img_data.resize((64, 64), Image.Resampling.LANCZOS)
+                            final_img = ImageTk.PhotoImage(img_data)
+                            self.preloaded_images[photo_url] = final_img
+                        else:
+                            print(f"Failed to download image: {photo_url} with status code: {response.status_code}")
+                    except Exception as e:
+                        print(f"Error loading image from {photo_url}: {e}")
+            self.display_menu_items()
+#===================================
+
     def create_menu_item_row(self, parent_frame, menu_item):
+        print(f"Creating row for menu item: {menu_item}")
+
         menu_item_id = menu_item[0]
         photo_url = menu_item[1]
         item_name = menu_item[2]
         description = menu_item[3]
         price = menu_item[4]
+        stock_level = menu_item[5]
+
 
         # Frames, 
         item_frame = ttk.Frame(parent_frame)
         item_frame.grid(sticky=tk.EW)
+        edit_button = ttk.Button(item_frame, text="Edit", command=lambda m=menu_item_id: self.edit_menu_item(m))
+        edit_button.grid(row=2, column=4, sticky="NSEW")
+
 
         for a in range(3):
             item_frame.grid_columnconfigure(a, weight=1)
@@ -225,63 +228,117 @@ class Menu(object):
         else:
             img_label = ttk.Label(item_frame, text="Error") 
 
+
         # Widgets
         name_label = ttk.Label(item_frame, text=item_name, anchor="w", justify="center")
         desc_label = ttk.Label(item_frame, text=description, font=('Helvetica', 8), anchor="w", justify="center")
         price_label = ttk.Label(item_frame, text=f"£{price}", anchor="w", justify="center")
         allergens_button = ttk.Button(item_frame, text="View Allergens", command=lambda item_name=item_name: self.show_allergens_popup(item_name))
         order_button = ttk.Button(item_frame, text="Add to Order", command=lambda m=menu_item_id: self.add_to_order(item_name, price, m))
+        stock_label = ttk.Label(item_frame, text=f"Stock: {stock_level}", anchor="w", justify="center")
 
-        # Grid Widgets        
+        # Grid Widgets    
         img_label.grid(row=0, rowspan=3, column=0, sticky="NSEW")
         name_label.grid(row=1, column=1, sticky="NSEW")
         desc_label.grid(row=1, column=2, sticky="NSEW")
         price_label.grid(row=2, column=3, columnspan=2, sticky="NSEW")
-        allergens_button.grid(row=0, rowspan=2, column=3, sticky="NSEW")
-        order_button.grid(row=0, rowspan=2, column=4, sticky="NSEW")
+        allergens_button.grid(row=0, column=3, sticky="NSEW")
+        order_button.grid(row=0, column=4, sticky="NSEW")
+        stock_label.grid(row=2, column=2, sticky="NSEW")
+        edit_button.grid(row=2, column=4, sticky="NSEW")
+   
+    def search_menu_items(self):
+        search_query = self.search_var.get().lower()
 
+        all_menu_items = self.menu.get_all_menu_items()
+
+        filtered_items = [item for item in all_menu_items if search_query in item[2].lower()]
+
+        self.clear_menu_items_frame()
+        self.display_filtered_menu_items(filtered_items)
+
+    def display_filtered_menu_items(self, items):
+        for widget in self.menu_items_frame.winfo_children():
+            widget.destroy()
+
+        for item in items:
+            self.create_menu_item_row(self.menu_items_frame, item)
+            
+    def clear_menu_items_frame(self):
+        # Destroy all widgets from the menu_items_frame.
+        for widget in self.menu_items_frame.winfo_children():
+            widget.destroy()
 
     def display_menu_items(self):
         menu_items = self.menu.get_all_menu_items()  # Fetch all menu items at once
+
+        canvas = tk.Canvas(self.menu_items_frame)
+        scrollbar = ttk.Scrollbar(self.menu_items_frame, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.grid(row=0, column=0, sticky="nsew")
+        scrollbar.grid(row=0, column=1, sticky="ns")
+
+        #Frame
+        inner_frame = ttk.Frame(canvas)
+        canvas.create_window((0, 0), window=inner_frame, anchor="nw")
+
+        def _on_frame_configure(event):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+
+        inner_frame.bind("<Configure>", _on_frame_configure)
+
+        # Creates the item frames in the canvas instead
         for menu_item in menu_items:
-            self.create_menu_item_row(self.menu_items_frame, menu_item)
+            self.create_menu_item_row(inner_frame, menu_item)
+
+        canvas.configure(scrollregion=canvas.bbox("all"))
 
     def add_to_order(self, item_name, price, menu_item_id):
-        order_item_id = self.item_counter
+        # Generate a unique internal ID
+        unique_order_item_id = f"{menu_item_id}-{self.item_counter}"
         self.item_counter += 1
 
-        self.order_treeview.insert("", "end", iid=order_item_id, values=(item_name, f"£{price}"))
-        self.order_items[order_item_id] = {
-            "menu_item_id": menu_item_id,  # No longer a list, just a single ID
-            "item_name": item_name,
-            "price": price
+        self.order_treeview.insert("", "end", iid=unique_order_item_id, values=(item_name, f"£{price}"))
+
+        self.order_items[unique_order_item_id] = {
+            "menu_item_id": menu_item_id, 
+            "price": price,
+            "quantity": 1 
         }
 
     def on_treeview_item_click(self, event):
-        doubleselected_item = self.order_treeview.selection() #Selection used to return the interal id of the clicked treeview item
+        selected_item = self.order_treeview.selection()
+        if selected_item:
+            unique_order_item_id = selected_item[0]
 
-        if doubleselected_item: 
-            internal_id = doubleselected_item[0] # Picks the unique id 
-            self.order_treeview.delete(internal_id)
+            self.order_treeview.delete(unique_order_item_id)
 
-            if internal_id in self.order_items: #Checks if its actually the one selected
-                del self.order_items[internal_id]
+            if unique_order_item_id in self.order_items:
+                del self.order_items[unique_order_item_id]
+
     
     def process_payment(self):
         current_date = datetime.date.today().strftime("%Y-%m-%d")
         current_time = datetime.datetime.now().strftime("%H:%M:%S")
 
+        total_price = 0
+
         for order_item_id, item_details in self.order_items.items():
             menu_item_id = item_details["menu_item_id"]
             price = str(item_details["price"])
+            
+            total_price += float(item_details['price'])
 
-            if self.checkbox_var.get() == 1: #Checks if "Discount" checkbox is clicked as yes.
+            if self.checkbox_var.get() == 1: #Checks if "Discount" checkbox is clicked as yes. andsomehow put it into reservations. 
                 discount = "STAFF20"
                 price = str(float(price) * 0.8)
             else:
                 discount = "NO_DISCOUNT"
 
             self.menu.insert_new_order(current_date, current_time, price, discount, menu_item_id, "PAID")
+            
+        showinfo("Payment successful!", f"Your total payment price is £{total_price}.")
 
         self.clear_order()
 
@@ -289,6 +346,8 @@ class Menu(object):
         self.order_treeview.delete(*self.order_treeview.get_children()) 
         self.order_items.clear()
         self.item_counter = 0
+
+
 #--------------------------------------------------------------------------------------------#
     
     

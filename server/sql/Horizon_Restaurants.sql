@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.31, for Win64 (x86_64)
 --
--- Host: 127.0.0.1    Database: horizon_restaurants
+-- Host: 127.0.0.1    Database: horizon_restaurants2
 -- ------------------------------------------------------
 -- Server version	8.0.31
 

@@ -187,8 +187,7 @@ class Login(object):
                 is_allowed = self.ask_for_password(staff_id=staff_id)
             
             case 4: # Admin
-                is_allowed = True # REMOVE AFTER TESTING
-                # is_allowed = self.ask_for_password(staff_id=staff_id)
+                is_allowed = self.ask_for_password(staff_id=staff_id)
                 self._parent.lbl_branch_id.label.configure(text=""),
             
             case 5: # HR Director
